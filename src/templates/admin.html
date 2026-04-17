@@ -574,7 +574,6 @@
                 userTg: userTg
             };
 
-            // Отправляем на сервер
             fetch('/api/order', {
                 method: 'POST',
                 headers: {
@@ -585,7 +584,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Показываем сообщение спасибки
                     showThankYouScreen(userName, totalPrice2);
                 } else {
                     alert('❌ Ошибка: ' + data.message);

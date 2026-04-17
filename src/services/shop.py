@@ -1,7 +1,6 @@
 import os
 from src.models.product import Product, BraceletLink, CustomBracelet
 
-# Пилоты F1 2024
 DRIVERS = {
     "max": {"name": "Max Verstappen", "number": 1, "team": "Red Bull"},
     "lando": {"name": "Lando Norris", "number": 81, "team": "McLaren"},
@@ -16,7 +15,6 @@ DRIVERS = {
     "nico": {"name": "Nico Hulkenberg", "number": 27, "team": "Haas"},
 }
 
-# Готовые браслеты
 PRODUCTS = [
     Product("1", "Браслет Max Verstappen #1", 2500, "Браслеты", description="Официальный браслет Red Bull Racing"),
     Product("2", "Браслет Charles Leclerc #16", 2500, "Браслеты", description="Официальный браслет Ferrari"),
@@ -24,7 +22,6 @@ PRODUCTS = [
     Product("4", "Браслет Lando Norris #81", 2500, "Браслеты", description="Официальный браслет McLaren"),
 ]
 
-# Звенья для браслетов (11 пилотов)
 BRACELET_LINKS = [
     BraceletLink("max", "Max Verstappen", "max", "src/pics/ferrari/max.jpg", price=500),
     BraceletLink("charles", "Charles Leclerc", "charles", "src/pics/ferrari/charles.jpg", price=500),
@@ -94,7 +91,6 @@ class Shop:
 
 from src.models.product import BraceletLink
 
-# 11 команд F1 2026
 PICS_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "pics")
 
 
@@ -149,8 +145,8 @@ TEAMS = {
     },
 }
 
-PRICE_BASE = 700  # Базовая цена за браслет до 20 звеньев
-PRICE_EXTRA = 40  # +40₽ за каждое звено свыше 20
+PRICE_BASE = 700
+PRICE_EXTRA = 40
 
 def calculate_price(links_count):
     """Рассчитать цену браслета"""
