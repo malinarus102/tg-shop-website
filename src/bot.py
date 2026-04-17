@@ -38,29 +38,24 @@ async def handle_text(update, context):
 
 def main():
     """Стартуем бота"""
-    # Увеличиваем timeout
     from telegram.request import HTTPXRequest
-    
     request = HTTPXRequest(connect_timeout=30.0, read_timeout=30.0)
-    
-    application = Application.builder()\
-        .token(Config.BOT_TOKEN)\
-        .request(request)\
+    application = (
+        Application.builder()
+        .token(Config.BOT_TOKEN)
+        .request(request)
         .build()
+    )
 
-    # Регистрация обработчиков команд
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("catalog", catalog))
     application.add_handler(CommandHandler("drivers", show_drivers))
 
-    # Регистрация обработчика callback-запросов
     application.add_handler(CallbackQueryHandler(handle_callback))
 
-    # Регистрация обработчика текстовых сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
-    # Запуск бота
     application.run_polling()
 
 if __name__ == '__main__':

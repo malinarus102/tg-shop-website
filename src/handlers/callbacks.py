@@ -1,6 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from src.services.shop import get_all_products, get_products_by_category, get_product_by_id, get_all_links, get_driver_info
+from src.services.shop import get_all_products, get_product_by_id, get_all_links, get_driver_info
 
 # Хранилище кастомных браслетов пользователей
 user_bracelets = {}

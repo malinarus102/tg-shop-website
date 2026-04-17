@@ -1,5 +1,5 @@
 import os
-from src.models.product import Product, BraceletLink, CustomBracelet
+from src.models.product import Product, BraceletLink
 
 DRIVERS = {
     "max": {"name": "Max Verstappen", "number": 1, "team": "Red Bull"},
@@ -88,8 +88,6 @@ class Shop:
 
     def remove_product(self, product_id):
         self.products = [product for product in self.products if product.id != product_id]
-
-from src.models.product import BraceletLink
 
 PICS_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "pics")
 

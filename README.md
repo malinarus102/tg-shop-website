@@ -1,193 +1,92 @@
-# 🏁 NOMINATION F1 BRACELETS BOT
+# NOMINATION F1 BRACELETS BOT
 
-Официальный Telegram бот магазина браслетов Nomination с пилотами Формулы-1.
+Telegram-бот и веб-конструктор браслетов Formula 1.
 
-## ✨ Возможности
+## Что умеет проект
 
-- 🛍️ **Каталог браслетов** - готовые браслеты всех 11 пилотов F1
-- 🛠️ **Конструктор браслета** - собери свой уникальный браслет из звеньев
-- 💳 **Оформление заказа** - быстрое и удобное оформление
-- 🌐 **Веб-приложение** - красивый интерфейс в отдельном окне
+- запуск Telegram-бота с командами `/start`, `/help`, `/drivers`, `/catalog`;
+- открытие WebApp-конструктора браслета из Telegram;
+- оформление заказа и отправка уведомления администратору;
+- локальная админка заказов: просмотр, изменение статуса, удаление.
 
-## 📋 Требования
+## Технологии
 
-- Python 3.9+
-- pip3
+- Python 3.11+
+- Flask
+- python-telegram-bot
+- requests
+- gunicorn
 
-## 🚀 Установка и запуск
+## Быстрый запуск (локально)
 
-### 1. Клонируй репозиторий или распакуй архив
-
-```bash
-cd tg-shop-bot
-```
-
-### 2. Установи зависимости
+1) Установить зависимости:
 
 ```bash
 python3 -m pip install -r requirements.txt
 ```
 
-### 3. Запусти Flask веб-приложение (Терминал 1)
+2) Создать `.env` в корне проекта:
+
+```env
+BOT_TOKEN=your_bot_token
+WEB_APP_URL=https://your-ngrok-url.ngrok-free.app
+ADMIN_CHAT_ID=your_admin_chat_id
+ADMIN_ID=your_admin_chat_id
+ADMIN_PASSWORD=change_me
+```
+
+3) Запустить веб-сервис:
 
 ```bash
 python3 src/web_app.py
 ```
 
-Должно вывести:
-```
-* Running on http://127.0.0.1:8080
-```
-
-### 4. Запусти ngrok для HTTPS туннеля (Терминал 2)
+4) Если работаешь локально, поднять HTTPS туннель:
 
 ```bash
 ngrok http 8080
 ```
 
-Скопируй HTTPS URL (например: `https://abc123.ngrok-free.dev`)
-
-### 5. Обнови конфигурацию (Терминал 1)
-
-Открой `src/config.py` и замени URL:
-
-```python
-WEB_APP_URL = os.getenv("WEB_APP_URL", "https://abc123.ngrok-free.dev")
-```
-
-### 6. Запусти Telegram бота (Терминал 3)
+5) Запустить бота:
 
 ```bash
 python3 -m src.bot
 ```
 
-Готово! Бот запущен! 🎉
+## Переменные окружения
 
-## 📱 Использование
+- `BOT_TOKEN` - токен Telegram-бота;
+- `WEB_APP_URL` - HTTPS URL WebApp (например, ngrok URL);
+- `ADMIN_CHAT_ID` - чат ID администратора (для worker/бота);
+- `ADMIN_ID` - чат ID администратора (используется web-сервисом);
+- `ADMIN_PASSWORD` - пароль для входа в `/admin`;
+- `LOGGING_LEVEL` - уровень логирования, по умолчанию `INFO`.
 
-1. Напиши боту `/start`
-2. Нажми кнопку **"🏁 Открыть магазин"**
-3. Выбери готовый браслет или собери свой:
-   - **🛍️ Готовые браслеты** - каталог с браслетами пилотов
-   - **🛠️ Собрать браслет** - выбери до 11 звеньев и оформи заказ
+## Запуск через Render
 
-## 📂 Структура проекта
+Проект уже подготовлен к деплою через `render.yaml`:
 
-```
-tg-shop-bot/
-├── src/
-│   ├── bot.py                 # Главный файл бота
-│   ├── config.py              # Конфигурация
-│   ├── web_app.py             # Flask веб-приложение
-│   ├── handlers/
-│   │   ├── commands.py        # Команды бота (/start, /help)
-│   │   └── callbacks.py       # Обработчики нажатий кнопок
-│   ├── services/
-│   │   └── shop.py            # Логика магазина (товары, пилоты)
-│   ├── models/
-│   │   └── product.py         # Модели данных
-│   ├── templates/
-│   │   └── catalog.html       # Веб-интерфейс каталога
-│   └── pics/                  # Папка с фотографиями
-├── requirements.txt           # Зависимости Python
-└── README.md                  # Этот файл
-```
+- `tg-shop-web` (web): `gunicorn src.web_app:app --bind 0.0.0.0:$PORT`
+- `tg-shop-bot` (worker): `python -m src.bot`
 
-## ⚙️ Конфигурация
+Нужно только задать переменные окружения в Render Dashboard.
 
-### Переменные окружения
+## Структура
 
-Создай `.env` файл или передай переменные:
-
-```bash
-BOT_TOKEN=твой_токен_от_botfather
-ADMIN_CHAT_ID=твой_id
-WEB_APP_URL=https://твой-ngrok-url.ngrok-free.dev
+```text
+src/
+  bot.py
+  web_app.py
+  config.py
+  handlers/
+  services/
+  models/
+  templates/
+  pics/
 ```
 
-### src/config.py
+## Важно
 
-```python
-class Config:
-    BOT_TOKEN = "8619719766:AAG0TIrc-DP64MS9eLi65R3Txm4K-1XnRko"
-    ADMIN_CHAT_ID = "5078064482"
-    WEB_APP_URL = "https://tulip-grooving-sash.ngrok-free.dev"
-```
-
-## 🏁 Пилоты Формулы-1 (2024)
-
-Доступные пилоты в конструкторе браслета:
-
-| № | Пилот | Команда |
-|---|-------|--------|
-| 1 | Max Verstappen | Red Bull |
-| 81 | Lando Norris | McLaren |
-| 81 | Oscar Piastri | McLaren |
-| 16 | Charles Leclerc | Ferrari |
-| 55 | Carlos Sainz | Ferrari |
-| 44 | Lewis Hamilton | Mercedes |
-| 63 | George Russell | Mercedes |
-| 14 | Fernando Alonso | Aston Martin |
-| 18 | Lance Stroll | Aston Martin |
-| 22 | Yuki Tsunoda | AlphaTauri |
-| 27 | Nico Hulkenberg | Haas |
-
-## 💰 Цены
-
-- **Готовый браслет**: 2500₽
-- **Звено для браслета**: 500₽ за штуку
-
-## 🔗 Ссылки
-
-- **Instagram**: [@alinv1xf](https://instagram.com/alinv1xf)
-- **Telegram Bot**: [@F1CasualWearBot](https://t.me/F1CasualWearBot)
-
-## 🛠️ Технологический стек
-
-- **Python 3.9+** - язык программирования
-- **python-telegram-bot 20+** - библиотека для работы с Telegram API
-- **Flask 2.3** - веб-фреймворк
-- **ngrok** - создание HTTPS туннеля для локального сервера
-
-## 📝 Команды бота
-
-| Команда | Описание |
-|---------|---------|
-| `/start` | Главное меню с кнопкой открытия магазина |
-| `/help` | Справка по командам |
-| `/drivers` | Список всех пилотов Формулы-1 |
-| `/catalog` | Открыть каталог браслетов |
-
-## ⚠️ Важно
-
-- Бот требует **HTTPS URL** для веб-приложения (используй ngrok для локальной разработки)
-- ngrok бесплатный, но требует регистрации
-- При перезапуске ngrok URL может измениться - обнови `config.py`
-
-## 🐛 Решение проблем
-
-### Ошибка "Port already in use"
-```bash
-lsof -i :8080
-kill -9 <PID>
-```
-
-### Ошибка "catalog.html not found"
-Убедись, что папка `src/templates/` существует и содержит файл `catalog.html`
-
-### Ошибка "invalid: only https links are allowed"
-Проверь, что в `config.py` используется HTTPS URL от ngrok, а не `http://localhost`
-
-## 👨‍💻 Разработка
-
-Проект разработан для магазина браслетов NOMINATION F1 BRACELETS.
-
-Контакты:
-- 📱 Instagram: [@alinv1xf](https://instagram.com/alinv1xf)
-- 💬 Telegram: [@alinv1xf](https://t.me/alinv1xf)
-
----
-
-**Версия**: 1.0.0  
-**Дата**: 17 апреля 2026  
-**Лицензия**: MIT
+- не коммить `.env` и любые секреты;
+- для Telegram WebApp нужен только HTTPS URL;
+- при смене ngrok URL обновляй `WEB_APP_URL`.
