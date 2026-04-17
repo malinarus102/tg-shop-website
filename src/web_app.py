@@ -1,0 +1,243 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
+
+from flask import Flask, render_template, jsonify, send_from_directory, request
+from src.services.shop import get_all_teams, get_team_designs
+import requests
+from dotenv import load_dotenv
+from datetime import datetime
+import json
+
+load_dotenv()
+
+app = Flask(__name__, template_folder='templates')
+
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+ADMIN_ID = os.getenv('ADMIN_ID') or os.getenv('ADMIN_CHAT_ID', '123456789')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+
+# Хранилище заказов в памяти (в продакшене - база данных!)
+orders_storage = []
+order_counter = 0
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), 'orders.json')
+
+
+def load_orders_storage():
+    """Загрузить заказы из файла при старте."""
+    global orders_storage, order_counter
+    if not os.path.exists(ORDERS_FILE):
+        orders_storage = []
+        order_counter = 0
+        return
+
+    try:
+        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
+            loaded = json.load(f)
+        if isinstance(loaded, list):
+            orders_storage = loaded
+            order_counter = max((int(o.get('id', 0)) for o in orders_storage), default=0)
+        else:
+            orders_storage = []
+            order_counter = 0
+    except Exception as e:
+        print(f"⚠️ Ошибка загрузки orders.json: {e}")
+        orders_storage = []
+        order_counter = 0
+
+
+def save_orders_storage():
+    """Сохранить заказы в файл."""
+    try:
+        with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(orders_storage, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"⚠️ Ошибка сохранения orders.json: {e}")
+
+
+load_orders_storage()
+
+@app.route('/')
+def index():
+    return render_template('catalog.html')
+
+@app.route('/admin')
+def admin_panel():
+    return render_template('admin.html')
+
+@app.route('/api/pic/<team_id>/<filename>')
+def serve_pic(team_id, filename):
+    try:
+        pic_path = os.path.join(os.path.dirname(__file__), 'pics', team_id)
+        return send_from_directory(pic_path, filename)
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        return '', 404
+
+@app.route('/api/teams')
+def get_teams():
+    teams = get_all_teams()
+    return jsonify([{
+        'id': team_id,
+        'name': team_data['name'],
+        'color': team_data['color'],
+        'drivers': team_data['drivers'],
+        'designsCount': len(team_data['designs'])
+    } for team_id, team_data in teams.items()])
+
+@app.route('/api/teams/<team_id>/designs')
+def get_designs(team_id):
+    designs = get_team_designs(team_id)
+    return jsonify([{
+        'id': design['id'],
+        'name': design['name'],
+        'image': design['image']
+    } for design in designs])
+
+@app.route('/api/order', methods=['POST'])
+def submit_order():
+    global order_counter
+    try:
+        data = request.json
+        
+        wrist_size = data.get('wristSize', 0)
+        links_count = data.get('linksCount', 0)
+        total_price = data.get('totalPrice', 0)
+        links = data.get('links', [])
+        user_name = data.get('userName', 'Аноним')
+        user_phone = data.get('userPhone', 'Не указан')
+        user_tg = data.get('userTg', 'Не указан')
+        user_city = data.get('userCity', 'Не указан')
+
+        # Подсчитываем звенья по командам
+        team_counts = {}
+        for link in links:
+            team = link.get('teamName', 'Unknown')
+            team_counts[team] = team_counts.get(team, 0) + 1
+
+        # Сохраняем заказ в памяти
+        order_counter += 1
+        order_obj = {
+            'id': order_counter,
+            'wristSize': wrist_size,
+            'linksCount': links_count,
+            'totalPrice': total_price,
+            'composition': team_counts,
+            'userName': user_name,
+            'userPhone': user_phone,
+            'userTg': user_tg,
+            'userCity': user_city,
+            'createdAt': datetime.now().isoformat(),
+            'status': 'новый'
+        }
+        orders_storage.append(order_obj)
+        save_orders_storage()
+        
+        print(f"\n{'='*60}")
+        print(f"✅ НОВЫЙ ЗАКАЗ #{order_counter}")
+        print(f"{'='*60}")
+        print(f"👤 Клиент: {user_name}")
+        print(f"📱 Телефон: {user_phone}")
+        print(f"🔷 Telegram: {user_tg}")
+        print(f"🏙️ Город: {user_city}")
+        print(f"📏 Размер запястья: {wrist_size} см")
+        print(f"🔗 Звеньев: {links_count}")
+        print(f"💰 Сумма: {total_price}₽")
+        print(f"📋 Состав: {team_counts}")
+        print(f"⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+        print(f"📦 Всего заказов: {len(orders_storage)}")
+        print(f"{'='*60}\n")
+
+        # Формируем сообщение для Telegram
+        message = f"""
+📦 <b>🚨 НОВЫЙ ЗАКАЗ БРАСЛЕТА F1! #{order_counter}</b>
+
+👤 <b>Клиент:</b> {user_name}
+📱 <b>Телефон:</b> <code>{user_phone}</code>
+🔷 <b>Telegram:</b> {user_tg}
+🏙️ <b>Город:</b> {user_city}
+
+📏 <b>Размер запястья:</b> {wrist_size} см
+🔗 <b>Всего звеньев:</b> {links_count}
+💰 <b>Итоговая сумма:</b> <b>{total_price}₽</b>
+
+📋 <b>СОСТАВ БРАСЛЕТА:</b>
+"""
+        
+        for team, count in sorted(team_counts.items()):
+            message += f"\n  • {team}: {count} звеньев"
+        
+        message += f"\n\n✅ Статус: <b>НОВЫЙ</b>"
+        message += f"\n⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}"
+        message += f"\n\n<a href='http://127.0.0.1:8080/admin'>📊 ПЕРЕЙТИ В АДМИНКУ</a>"
+
+        # Отправляем в Telegram
+        if BOT_TOKEN and ADMIN_ID:
+            send_to_telegram(BOT_TOKEN, ADMIN_ID, message)
+            return jsonify({'success': True, 'message': 'Заказ принят!', 'orderId': order_counter})
+        else:
+            print("⚠️ BOT_TOKEN или ADMIN_ID не установлены - заказ сохранен локально")
+            return jsonify({'success': True, 'message': 'Заказ принят!', 'orderId': order_counter})
+
+    except Exception as e:
+        print(f"❌ Ошибка при обработке заказа: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    """Вход администратора"""
+    data = request.json
+    password = data.get('password', '')
+    
+    if password == ADMIN_PASSWORD:
+        return jsonify({'success': True, 'message': 'Вход выполнен'})
+    else:
+        return jsonify({'success': False, 'message': 'Неверный пароль'}), 401
+
+@app.route('/api/admin/orders')
+def get_orders():
+    """Получить все заказы"""
+    return jsonify(sorted(orders_storage, key=lambda x: x['id'], reverse=True))
+
+@app.route('/api/admin/order/<int:order_id>/status', methods=['PUT'])
+def update_order_status(order_id):
+    """Обновить статус заказа"""
+    data = request.json
+    new_status = data.get('status', '')
+    
+    for order in orders_storage:
+        if order['id'] == order_id:
+            order['status'] = new_status
+            save_orders_storage()
+            print(f"✅ Заказ #{order_id} статус изменен на: {new_status}")
+            return jsonify({'success': True, 'order': order})
+    
+    return jsonify({'success': False, 'message': 'Заказ не найден'}), 404
+
+@app.route('/api/admin/order/<int:order_id>', methods=['DELETE'])
+def delete_order(order_id):
+    """Удалить заказ"""
+    global orders_storage
+    orders_storage = [o for o in orders_storage if o['id'] != order_id]
+    save_orders_storage()
+    print(f"✅ Заказ #{order_id} удален")
+    return jsonify({'success': True})
+
+def send_to_telegram(token, chat_id, message):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': message,
+        'parse_mode': 'HTML'
+    }
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code == 200:
+            print(f"✅ Заказ отправлен администратору (ID: {chat_id})")
+        else:
+            print(f"❌ Ошибка отправки: {response.text}")
+    except Exception as e:
+        print(f"❌ Ошибка подключения к Telegram: {e}")
+
+if __name__ == '__main__':
+    app.run(debug=True, port=8080, host='127.0.0.1')
