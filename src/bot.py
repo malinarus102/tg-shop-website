@@ -1,6 +1,7 @@
 import logging
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from src.config import Config
+from src.utils import wrist_to_links, validate_wrist_size
 from src.handlers.commands import start, help_command, catalog, show_drivers
 from src.handlers.callbacks import handle_callback
 
@@ -21,11 +22,12 @@ async def handle_text(update, context):
             )
             return
 
-        if wrist_size <= 0:
-            await update.message.reply_text("Обхват должен быть больше 0 см. Попробуйте еще раз.")
+        error = validate_wrist_size(wrist_size)
+        if error:
+            await update.message.reply_text(f"{error} Попробуйте еще раз.")
             return
 
-        links_count = int(wrist_size + 1)
+        links_count = wrist_to_links(wrist_size)
         context.user_data["awaiting_wrist"] = False
 
         await update.message.reply_text(
