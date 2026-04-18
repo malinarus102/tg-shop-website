@@ -3,7 +3,7 @@ from src.models.product import Product, BraceletLink
 
 DRIVERS = {
     "max": {"name": "Max Verstappen", "number": 1, "team": "Red Bull"},
-    "lando": {"name": "Lando Norris", "number": 81, "team": "McLaren"},
+    "lando": {"name": "Lando Norris", "number": 4, "team": "McLaren"},
     "oscar": {"name": "Oscar Piastri", "number": 81, "team": "McLaren"},
     "charles": {"name": "Charles Leclerc", "number": 16, "team": "Ferrari"},
     "carlos": {"name": "Carlos Sainz", "number": 55, "team": "Ferrari"},
@@ -19,21 +19,21 @@ PRODUCTS = [
     Product("1", "Браслет Max Verstappen #1", 2500, "Браслеты", description="Официальный браслет Red Bull Racing"),
     Product("2", "Браслет Charles Leclerc #16", 2500, "Браслеты", description="Официальный браслет Ferrari"),
     Product("3", "Браслет Lewis Hamilton #44", 2500, "Браслеты", description="Официальный браслет Mercedes"),
-    Product("4", "Браслет Lando Norris #81", 2500, "Браслеты", description="Официальный браслет McLaren"),
+    Product("4", "Браслет Lando Norris #4", 2500, "Браслеты", description="Официальный браслет McLaren"),
 ]
 
 BRACELET_LINKS = [
-    BraceletLink("max", "Max Verstappen", "max", "src/pics/ferrari/max.jpg", price=500),
+    BraceletLink("max", "Max Verstappen", "max", "src/pics/redbull/max.jpg", price=500),
     BraceletLink("charles", "Charles Leclerc", "charles", "src/pics/ferrari/charles.jpg", price=500),
-    BraceletLink("lewis", "Lewis Hamilton", "lewis", "src/pics/ferrari/lewis.jpg", price=500),
-    BraceletLink("lando", "Lando Norris", "lando", "src/pics/ferrari/lando.jpg", price=500),
-    BraceletLink("oscar", "Oscar Piastri", "oscar", "src/pics/ferrari/oscar.jpg", price=500),
-    BraceletLink("carlos", "Carlos Sainz", "carlos", "src/pics/ferrari/carlos.jpg", price=500),
-    BraceletLink("george", "George Russell", "george", "src/pics/ferrari/george.jpg", price=500),
-    BraceletLink("fernando", "Fernando Alonso", "fernando", "src/pics/ferrari/fernando.jpg", price=500),
-    BraceletLink("lance", "Lance Stroll", "lance", "src/pics/ferrari/lance.jpg", price=500),
-    BraceletLink("yuki", "Yuki Tsunoda", "yuki", "src/pics/ferrari/yuki.jpg", price=500),
-    BraceletLink("nico", "Nico Hulkenberg", "nico", "src/pics/ferrari/nico.jpg", price=500),
+    BraceletLink("lewis", "Lewis Hamilton", "lewis", "src/pics/mercedes/lewis.jpg", price=500),
+    BraceletLink("lando", "Lando Norris", "lando", "src/pics/mclaren/lando.jpg", price=500),
+    BraceletLink("oscar", "Oscar Piastri", "oscar", "src/pics/mclaren/oscar.jpg", price=500),
+    BraceletLink("carlos", "Carlos Sainz", "carlos", "src/pics/williams/carlos.jpg", price=500),
+    BraceletLink("george", "George Russell", "george", "src/pics/mercedes/george.jpg", price=500),
+    BraceletLink("fernando", "Fernando Alonso", "fernando", "src/pics/astonmartin/fernando.jpg", price=500),
+    BraceletLink("lance", "Lance Stroll", "lance", "src/pics/astonmartin/lance.jpg", price=500),
+    BraceletLink("yuki", "Yuki Tsunoda", "yuki", "src/pics/redbull/yuki.jpg", price=500),
+    BraceletLink("nico", "Nico Hulkenberg", "nico", "src/pics/haas/nico.jpg", price=500),
 ]
 
 def get_all_products():
