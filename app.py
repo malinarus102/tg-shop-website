@@ -1,0 +1,2 @@
+from src.web_app import app
+
