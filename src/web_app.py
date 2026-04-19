@@ -347,4 +347,5 @@ def validate_init_data(init_data: str, bot_token: str) -> bool:
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080, host='127.0.0.1')
+    port = int(os.environ.get("PORT", 8080))
+    app.run(debug=False, port=port, host='0.0.0.0')
