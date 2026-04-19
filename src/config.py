@@ -4,12 +4,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config:
-    BOT_TOKEN = os.getenv("BOT_TOKEN", "8619719766:AAG0TIrc-DP64MS9eLi65R3Txm4K-1XnRko")
-    ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "5078064482")
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+    ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "")
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
     LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
     WEB_APP_URL = os.getenv("WEB_APP_URL", "https://example.ngrok-free.app")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "986985986")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
     @classmethod
     def validate(cls):
