@@ -1,3 +1,6 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import logging
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from src.config import Config
@@ -5,7 +8,6 @@ from src.utils import wrist_to_links, validate_wrist_size
 from src.handlers.commands import start, help_command, catalog, show_drivers
 from src.handlers.callbacks import handle_callback
 
-# Настройка логирования
 logging.basicConfig(level=Config.LOGGING_LEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
