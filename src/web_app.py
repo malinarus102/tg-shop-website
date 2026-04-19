@@ -157,6 +157,8 @@ def submit_order():
         user_tg = data.get('userTg', 'Не указан')
         user_city = data.get('userCity', 'Не указан')
         user_tg_id = data.get('userTgId')  # числовой Telegram ID для отправки подтверждения
+        delivery_price = data.get('deliveryPrice', 0)
+        delivery_tariff = data.get('deliveryTariff')
 
         team_counts = {}
         for link in links:
@@ -175,6 +177,8 @@ def submit_order():
             'userTg': user_tg,
             'userCity': user_city,
             'userTgId': user_tg_id,
+            'deliveryPrice': delivery_price,
+            'deliveryTariff': delivery_tariff,
             'createdAt': datetime.now().isoformat(),
             'status': 'новый'
         }
@@ -207,6 +211,7 @@ def submit_order():
 📏 <b>Размер запястья:</b> {wrist_size} см
 🔗 <b>Всего звеньев:</b> {links_count}
 💰 <b>Итоговая сумма:</b> <b>{total_price}₽</b>
+🚚 <b>Доставка СДЭК:</b> {delivery_price}₽
 
 📋 <b>СОСТАВ БРАСЛЕТА:</b>
 """
@@ -345,6 +350,122 @@ def validate_init_data(init_data: str, bot_token: str) -> bool:
         print(f"⚠️ Ошибка валидации initData: {e}")
         return False
 
+CDEK_CLIENT_ID     = os.getenv('CDEK_CLIENT_ID', '')
+CDEK_CLIENT_SECRET = os.getenv('CDEK_CLIENT_SECRET', '')
+CDEK_FROM_CITY     = os.getenv('CDEK_FROM_CITY_CODE', '')   # код города отправки
+CDEK_WEIGHT_G      = int(os.getenv('CDEK_WEIGHT_G', '150')) # вес посылки в граммах
+CDEK_API           = 'https://api.cdek.ru/v2'
+
+# Тарифы: code → (название, тип)
+CDEK_TARIFFS = {
+    136: ('Посылка склад–склад', 'склад'),
+    137: ('Посылка склад–дверь', 'дверь'),
+    138: ('Посылка дверь–склад', 'склад'),
+    139: ('Посылка дверь–дверь', 'дверь'),
+    366: ('Эконом посылка',      'склад'),
+}
+
+_cdek_token = None
+_cdek_token_expires = 0
+
+
+def cdek_get_token():
+    """Получить/обновить токен СДЭК (кэш на час)."""
+    import time
+    global _cdek_token, _cdek_token_expires
+    if _cdek_token and time.time() < _cdek_token_expires - 60:
+        return _cdek_token
+    resp = requests.post(
+        f'{CDEK_API}/oauth/token',
+        data={'grant_type': 'client_credentials',
+              'client_id': CDEK_CLIENT_ID,
+              'client_secret': CDEK_CLIENT_SECRET},
+        timeout=10
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    _cdek_token = data['access_token']
+    _cdek_token_expires = time.time() + data.get('expires_in', 3600)
+    return _cdek_token
+
+
+def cdek_city_code(city_name: str):
+    """Найти код города СДЭК по названию."""
+    token = cdek_get_token()
+    resp = requests.get(
+        f'{CDEK_API}/location/cities',
+        params={'city': city_name, 'size': 1},
+        headers={'Authorization': f'Bearer {token}'},
+        timeout=10
+    )
+    resp.raise_for_status()
+    cities = resp.json()
+    return cities[0].get('code') if cities else None
+
+
+def cdek_calculate(to_city_code: int, order_price: int) -> list:
+    """Рассчитать все тарифы и вернуть отсортированный список."""
+    token = cdek_get_token()
+    results = []
+    for tariff_code, (name, delivery_type) in CDEK_TARIFFS.items():
+        try:
+            resp = requests.post(
+                f'{CDEK_API}/calculator/tariff',
+                json={
+                    'tariff_code':   tariff_code,
+                    'from_location': {'code': int(CDEK_FROM_CITY)},
+                    'to_location':   {'code': to_city_code},
+                    'packages':      [{'weight': CDEK_WEIGHT_G,
+                                       'length': 15, 'width': 10, 'height': 5}],
+                    'services':      [{'code': 'INSURANCE',
+                                       'parameter': str(order_price)}],
+                },
+                headers={'Authorization': f'Bearer {token}'},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                d = resp.json()
+                if not d.get('errors'):
+                    results.append({
+                        'tariff_code':   tariff_code,
+                        'name':          name,
+                        'delivery_type': delivery_type,
+                        'price':         int(d.get('delivery_sum', 0)),
+                        'period_min':    d.get('period_min', '?'),
+                        'period_max':    d.get('period_max', '?'),
+                    })
+        except Exception as e:
+            print(f'⚠️ СДЭК тариф {tariff_code}: {e}')
+    results.sort(key=lambda x: x['price'])
+    return results
+
+
+@app.route('/api/delivery/calculate', methods=['POST'])
+def calculate_delivery():
+    """Рассчитать стоимость доставки СДЭК."""
+    if not CDEK_CLIENT_ID or not CDEK_CLIENT_SECRET or not CDEK_FROM_CITY:
+        return jsonify({'success': False, 'message': 'СДЭК не настроен на сервере'}), 503
+
+    data = request.json
+    city_name   = (data.get('city') or '').strip()
+    order_price = int(data.get('orderPrice', 0))
+
+    if not city_name:
+        return jsonify({'success': False, 'message': 'Укажите город'}), 400
+
+    try:
+        city_code = cdek_city_code(city_name)
+        if not city_code:
+            return jsonify({'success': False,
+                            'message': f'Город «{city_name}» не найден в базе СДЭК'}), 404
+        tariffs = cdek_calculate(city_code, order_price)
+        if not tariffs:
+            return jsonify({'success': False,
+                            'message': 'Не удалось рассчитать доставку в этот город'}), 404
+        return jsonify({'success': True, 'tariffs': tariffs, 'city': city_name})
+    except Exception as e:
+        print(f'❌ СДЭК ошибка: {e}')
+        return jsonify({'success': False, 'message': 'Ошибка расчёта доставки'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))

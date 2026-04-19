@@ -1003,6 +1003,88 @@
         ══════════════════════════════ */
         .screen { display: none; }
         .screen.active { display: block; }
+
+        /* ── DELIVERY CDEK ── */
+        .delivery-section { margin-bottom: 20px; }
+
+        .delivery-city-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .delivery-city-input {
+            flex: 1;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border-bright, rgba(255,255,255,0.15));
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .delivery-city-input:focus { border-color: var(--red); }
+        .delivery-city-input::placeholder { color: var(--text-dim, rgba(255,255,255,0.25)); }
+
+        .btn-calc {
+            padding: 12px 16px;
+            background: var(--surface2, #181818);
+            border: 1px solid var(--border-bright, rgba(255,255,255,0.15));
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .btn-calc:hover { border-color: var(--red); background: var(--red-dim, rgba(232,0,45,0.15)); }
+        .btn-calc:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .delivery-error { color: #ff6b6b; font-size: 12px; min-height: 16px; margin-bottom: 8px; }
+
+        .tariffs-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+
+        .tariff-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            background: var(--surface, #111);
+            border: 1px solid var(--border, rgba(255,255,255,0.07));
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .tariff-item:hover { border-color: var(--border-bright, rgba(255,255,255,0.15)); }
+        .tariff-item.selected { border-color: var(--red); background: var(--red-dim, rgba(232,0,45,0.12)); }
+
+        .tariff-radio {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--border-bright, rgba(255,255,255,0.2));
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.2s;
+        }
+        .tariff-item.selected .tariff-radio { border-color: var(--red); }
+        .tariff-radio-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: none; }
+        .tariff-item.selected .tariff-radio-dot { display: block; }
+
+        .tariff-info { flex: 1; }
+        .tariff-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+        .tariff-days { font-size: 11px; color: var(--text-muted); }
+
+        .tariff-price { font-size: 18px; font-weight: 700; color: var(--text); }
+
+        .tariff-type-badge {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 2px 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.06); color: var(--text-muted);
+        }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -1158,6 +1240,19 @@
         <div class="summary-section">
             <div class="summary-section-title">Состав браслета</div>
             <div id="summaryList"></div>
+        </div>
+
+        <div class="delivery-section">
+            <div class="summary-section-title">Доставка СДЭК</div>
+            <div class="delivery-city-row">
+                <input class="delivery-city-input" id="deliveryCity"
+                       type="text" placeholder="Введите ваш город">
+                <button class="btn-calc" id="calcDeliveryBtn" onclick="calcDelivery()">
+                    Рассчитать
+                </button>
+            </div>
+            <div class="delivery-error" id="deliveryError"></div>
+            <div class="tariffs-list" id="tariffsList"></div>
         </div>
 
         <div class="price-row">
@@ -1394,8 +1489,12 @@
 
         document.getElementById('currentPrice').textContent = totalPrice + '₽';
         document.getElementById('totalPrice').value = totalPrice;
-        document.getElementById('submitBtn').style.display =
-            selectedLinks.length === requiredLinksCount ? 'block' : 'none';
+        if (selectedTariff !== null) {
+            updateTotalWithDelivery();
+        } else {
+            document.getElementById('submitBtn').style.display =
+                selectedLinks.length === requiredLinksCount ? 'block' : 'none';
+        }
     }
 
     function removeLinks(teamId) {
@@ -1488,7 +1587,9 @@
             userTg:     userTg,
             userCity:   userCity,
             userTgId:   tgUser?.id ?? null,
-            initData:   tgInitData
+            initData:       tgInitData,
+            deliveryPrice:  deliveryPrice,
+            deliveryTariff: selectedTariff
         };
 
         fetch('/api/order', {
@@ -1519,6 +1620,84 @@
             submitBtn.disabled = false;
         });
     }
+
+
+        // ── ДОСТАВКА СДЭК ──
+        let selectedTariff = null;
+        let deliveryPrice = 0;
+
+        async function calcDelivery() {
+            const city = document.getElementById('deliveryCity').value.trim();
+            const errorEl = document.getElementById('deliveryError');
+            const btn = document.getElementById('calcDeliveryBtn');
+            const list = document.getElementById('tariffsList');
+
+            if (!city) { errorEl.textContent = 'Введите город доставки'; return; }
+
+            errorEl.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Считаем...';
+            list.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ Запрос в СДЭК...</div>';
+            selectedTariff = null;
+            deliveryPrice = 0;
+            updateTotalWithDelivery();
+
+            try {
+                const orderPrice = calculateTotalPrice();
+                const resp = await fetch('/api/delivery/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ city, orderPrice })
+                });
+                const data = await resp.json();
+                if (!data.success) {
+                    errorEl.textContent = data.message || 'Ошибка расчёта';
+                    list.innerHTML = '';
+                    return;
+                }
+                renderTariffs(data.tariffs);
+            } catch (e) {
+                errorEl.textContent = 'Ошибка соединения с сервером';
+                list.innerHTML = '';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Рассчитать';
+            }
+        }
+
+        function renderTariffs(tariffs) {
+            const list = document.getElementById('tariffsList');
+            list.innerHTML = tariffs.map(t => `
+                <div class="tariff-item" onclick="selectTariff(${t.tariff_code}, ${t.price}, this)">
+                    <div class="tariff-radio"><div class="tariff-radio-dot"></div></div>
+                    <div class="tariff-info">
+                        <div class="tariff-name">${t.name}</div>
+                        <div class="tariff-days">${t.period_min}–${t.period_max} дней</div>
+                    </div>
+                    <span class="tariff-type-badge">${t.delivery_type}</span>
+                    <div class="tariff-price">${t.price}₽</div>
+                </div>
+            `).join('');
+        }
+
+        function selectTariff(code, price, el) {
+            document.querySelectorAll('.tariff-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedTariff = code;
+            deliveryPrice = price;
+            updateTotalWithDelivery();
+        }
+
+        function updateTotalWithDelivery() {
+            const braceletPrice = calculateTotalPrice();
+            const total = braceletPrice + deliveryPrice;
+            document.getElementById('currentPrice').textContent = total + '₽';
+            document.getElementById('totalPrice').value = total;
+            const ready = selectedLinks.length === requiredLinksCount && selectedTariff !== null;
+            const btn = document.getElementById('submitBtn');
+            btn.style.display = ready ? 'block' : 'none';
+            if (ready) btn.textContent = `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`;
+        }
 
     init();
 </script>
