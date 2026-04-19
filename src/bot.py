@@ -1,9 +1,7 @@
-import logging
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from src.config import Config
-from src.utils import wrist_to_links, validate_wrist_size
-from src.handlers.commands import start, help_command, catalog, show_drivers
-from src.handlers.callbacks import handle_callback
+from .utils import wrist_to_links, validate_wrist_size
+from .config import Config
+from .handlers.commands import start, help_command, catalog, show_drivers
+from .handlers.callbacks import handle_callback
 
 logging.basicConfig(level=Config.LOGGING_LEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
