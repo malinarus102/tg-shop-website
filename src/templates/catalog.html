@@ -1085,6 +1085,129 @@
             padding: 2px 6px; border-radius: 3px;
             background: rgba(255,255,255,0.06); color: var(--text-muted);
         }
+
+        /* ── ДОСТАВКА СДЭК ── */
+    .delivery-section {
+        margin-bottom: 20px;
+    }
+
+    .delivery-city-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .delivery-city-input {
+        flex: 1;
+        padding: 12px 14px;
+        background: var(--surface2);
+        border: 1px solid var(--border-hi);
+        border-radius: 9px;
+        color: var(--text);
+        font-family: 'Barlow', sans-serif;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .delivery-city-input:focus {
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px var(--red-dim);
+    }
+
+    .btn-calc {
+        padding: 0 18px;
+        background: var(--surface3);
+        border: 1px solid var(--border-hi);
+        border-radius: 9px;
+        color: var(--text);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+
+    .btn-calc:hover { border-color: var(--red); color: var(--red); }
+    .btn-calc:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .delivery-error {
+        color: #ff6b6b;
+        font-size: 12px;
+        min-height: 16px;
+        margin-bottom: 8px;
+    }
+
+    .tariffs-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+    .tariff-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .tariff-item:hover { border-color: var(--border-hi); }
+    .tariff-item.selected { border-color: var(--red); background: var(--red-dim); }
+
+    .tariff-radio {
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        border: 2px solid var(--border-hi);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tariff-item.selected .tariff-radio { border-color: var(--red); }
+
+    .tariff-radio-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--red);
+        display: none;
+    }
+
+    .tariff-item.selected .tariff-radio-dot { display: block; }
+
+    .tariff-info { flex: 1; }
+
+    .tariff-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .tariff-days { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .tariff-type-badge {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 3px;
+        background: var(--surface2);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+    }
+
+    .tariff-price {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--red);
+    }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
