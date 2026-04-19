@@ -4,21 +4,14 @@ from src.config import Config
 from src.services.shop import DRIVERS
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Стартовое сообщение"""
-    context.user_data["awaiting_wrist"] = True
-
     keyboard = [
-        [InlineKeyboardButton("🏁 Собрать браслет", web_app=WebAppInfo(url=Config.WEB_APP_URL))],
-        [InlineKeyboardButton("ℹ️ О магазине", callback_data="about")],
+    [InlineKeyboardButton("🏁 Собрать браслет", web_app=WebAppInfo(url=Config.WEB_APP_URL))],
     ]
-    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "🏁 *Добро пожаловать в NOMINATION F1 BRACELETS* 🏁\n\n"
-        "Введи обхват запястья в сантиметрах, например: `17`\n\n"
-        "Я посчитаю количество звеньев по формуле: обхват + 1.\n\n"
-        "После расчета можешь перейти к сборке браслета 👇\n\n"
+        "🏁 *Добро пожаловать в Браслетный Пит Стоп!* 🏁\n\n"
+        "Собери свой уникальный браслет из звеньев команд F1 👇\n\n"
         "🌐 @alinv1xf",
         reply_markup=reply_markup,
         parse_mode="Markdown"
