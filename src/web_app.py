@@ -60,6 +60,23 @@ def save_orders_storage():
 
 load_orders_storage()
 
+# Состояние магазина — открыт/закрыт
+shop_is_open = True
+
+@app.route('/api/shop/status')
+def shop_status():
+    """Текущий статус магазина — открыт или закрыт."""
+    return jsonify({'is_open': shop_is_open})
+
+@app.route('/api/admin/shop/toggle', methods=['POST'])
+def toggle_shop():
+    """Открыть или закрыть приём заказов."""
+    global shop_is_open
+    shop_is_open = not shop_is_open
+    status = 'открыт' if shop_is_open else 'закрыт'
+    print(f"🏁 Магазин {status}")
+    return jsonify({'is_open': shop_is_open})
+
 @app.route('/')
 def index():
     return render_template('catalog.html')
@@ -100,6 +117,8 @@ def get_designs(team_id):
 @app.route('/api/order', methods=['POST'])
 def submit_order():
     global order_counter
+    if not shop_is_open:
+        return jsonify({'success': False, 'message': 'Магазин временно закрыт'}), 503
     try:
         data = request.json
         

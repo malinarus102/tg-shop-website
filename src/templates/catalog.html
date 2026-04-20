@@ -1208,10 +1208,111 @@
         font-weight: 800;
         color: var(--red);
     }
+
+        /* ── SHOP CLOSED ── */
+        .pit-lane-closed {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #080808;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .pit-lane-closed.show { display: flex; }
+
+        .pit-closed-flag {
+            font-size: 64px;
+            margin-bottom: 24px;
+            animation: flagWave 1.8s ease-in-out infinite;
+        }
+
+        @keyframes flagWave {
+            0%, 100% { transform: rotate(-8deg) scale(1); }
+            50%       { transform: rotate(8deg) scale(1.05); }
+        }
+
+        .pit-closed-eyebrow {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 13px;
+            letter-spacing: 6px;
+            color: var(--red);
+            margin-bottom: 16px;
+        }
+
+        .pit-closed-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(40px, 12vw, 72px);
+            letter-spacing: 4px;
+            line-height: 1;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .pit-closed-title .accent { color: var(--red); }
+
+        .pit-closed-sub {
+            font-size: 15px;
+            color: rgba(255,255,255,0.45);
+            max-width: 320px;
+            line-height: 1.7;
+            margin-bottom: 36px;
+        }
+
+        .pit-closed-stripe {
+            display: flex;
+            gap: 0;
+            margin-bottom: 36px;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .pit-stripe-cell {
+            width: 28px;
+            height: 10px;
+        }
+
+        .pit-closed-social {
+            font-size: 13px;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.5px;
+        }
+
+        .pit-closed-social a {
+            color: var(--red);
+            text-decoration: none;
+        }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+<div class="pit-lane-closed" id="pitLaneClosed">
+    <div class="pit-closed-flag">🏁</div>
+    <div class="pit-closed-eyebrow">RED FLAG</div>
+    <div class="pit-closed-title">ПИТ-ЛЕЙН<br><span class="accent">ЗАКРЫТ</span></div>
+    <div class="pit-closed-stripe">
+        <div class="pit-stripe-cell" style="background:#fff"></div>
+        <div class="pit-stripe-cell" style="background:#080808"></div>
+        <div class="pit-stripe-cell" style="background:#fff"></div>
+        <div class="pit-stripe-cell" style="background:#080808"></div>
+        <div class="pit-stripe-cell" style="background:#fff"></div>
+        <div class="pit-stripe-cell" style="background:#080808"></div>
+        <div class="pit-stripe-cell" style="background:#fff"></div>
+        <div class="pit-stripe-cell" style="background:#080808"></div>
+        <div class="pit-stripe-cell" style="background:#fff"></div>
+        <div class="pit-stripe-cell" style="background:#080808"></div>
+    </div>
+    <div class="pit-closed-sub">
+        Заказы временно не принимаются.<br>
+        Скоро вернёмся на трассу — следите за обновлениями!
+    </div>
+    <div class="pit-closed-social">Мы в Telegram: <a href="https://t.me/alinv1xf">@alinv1xf</a></div>
+</div>
+
 <div class="container">
 
     <header class="site-header">
@@ -1848,6 +1949,21 @@
             }
         }
 
+
+        // ── СТАТУС МАГАЗИНА ──
+        async function checkShopStatus() {
+            try {
+                const resp = await fetch('/api/shop/status');
+                const data = await resp.json();
+                if (!data.is_open) {
+                    document.getElementById('pitLaneClosed').classList.add('show');
+                }
+            } catch (e) {
+                // Если не смогли получить статус — не блокируем
+            }
+        }
+
+    checkShopStatus();
     init();
 </script>
 </body>

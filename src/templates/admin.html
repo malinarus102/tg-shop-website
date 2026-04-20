@@ -510,6 +510,50 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(232,0,45,0.5); }
+
+        .shop-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .shop-toggle-btn.open {
+            background: rgba(34,197,94,0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+
+        .shop-toggle-btn.open:hover {
+            background: rgba(34,197,94,0.25);
+        }
+
+        .shop-toggle-btn.closed {
+            background: rgba(232,0,45,0.15);
+            color: #ff6b8a;
+            border: 1px solid rgba(232,0,45,0.3);
+        }
+
+        .shop-toggle-btn.closed:hover {
+            background: rgba(232,0,45,0.25);
+        }
+
+        .shop-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .shop-toggle-btn.open .shop-status-dot { background: #4ade80; }
+        .shop-toggle-btn.closed .shop-status-dot { background: #ff6b8a; }
     </style>
 </head>
 <body>
@@ -533,6 +577,10 @@
         <div class="top-actions">
             <div class="refresh-dot" title="Автообновление каждые 10с"></div>
             <button class="top-btn" onclick="loadOrders()">↻ Обновить</button>
+            <button class="shop-toggle-btn open" id="shopToggleBtn" onclick="toggleShop()">
+                <span class="shop-status-dot"></span>
+                <span id="shopBtnLabel">ПРИЁМ ОТКРЫТ</span>
+            </button>
             <button class="top-btn danger" onclick="handleLogout()">Выйти</button>
         </div>
     </div>
@@ -577,6 +625,37 @@
     let currentFilter = 'all';
     let openOrderId = null;
 
+
+    // ── УПРАВЛЕНИЕ МАГАЗИНОМ ──
+    let shopIsOpen = true;
+
+    function loadShopStatus() {
+        fetch('/api/shop/status')
+            .then(r => r.json())
+            .then(data => applyShopStatus(data.is_open))
+            .catch(() => {});
+    }
+
+    function toggleShop() {
+        fetch('/api/admin/shop/toggle', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => applyShopStatus(data.is_open))
+            .catch(err => console.error('Ошибка:', err));
+    }
+
+    function applyShopStatus(isOpen) {
+        shopIsOpen = isOpen;
+        const btn = document.getElementById('shopToggleBtn');
+        const label = document.getElementById('shopBtnLabel');
+        if (isOpen) {
+            btn.className = 'shop-toggle-btn open';
+            label.textContent = 'ПРИЁМ ОТКРЫТ';
+        } else {
+            btn.className = 'shop-toggle-btn closed';
+            label.textContent = 'ПРИЁМ ЗАКРЫТ';
+        }
+    }
+
     // ── AUTH ──
     function handleLogin() {
         const password = document.getElementById('passwordInput').value;
@@ -594,6 +673,7 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 loadOrders();
+                loadShopStatus();
                 setInterval(loadOrders, 10000);
             } else {
                 showLoginError('Неверный пароль');
