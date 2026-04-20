@@ -1366,7 +1366,7 @@
         </div>
 
         <div class="delivery-section">
-            <div class="summary-section-title">Доставка СДЭК</div>
+            <div class="summary-section-title">Доставка СДЭК <span style="font-size:10px;color:var(--text-dim);text-transform:none;letter-spacing:0;font-weight:400">(необязательно)</span></div>
             <div class="delivery-city-row">
                 <input class="delivery-city-input" id="deliveryCity"
                        type="text" placeholder="Введите ваш город">
@@ -1634,12 +1634,8 @@
 
         document.getElementById('currentPrice').textContent = totalPrice + '₽';
         document.getElementById('totalPrice').value = totalPrice;
-        if (selectedTariff !== null) {
-            updateTotalWithDelivery();
-        } else {
-            document.getElementById('submitBtn').style.display =
-                selectedLinks.length === requiredLinksCount ? 'block' : 'none';
-        }
+        // Обновляем итог и кнопку — через единую функцию
+        updateTotalWithDelivery();
     }
 
     function removeLinks(teamId) {
@@ -1688,10 +1684,13 @@
     }
 
     function openCheckoutModal() {
-        const totalPrice = calculateTotalPrice();
+        const braceletPrice = calculateTotalPrice();
+        const total = braceletPrice + deliveryPrice;
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
-        submitBtn.textContent = `ОФОРМИТЬ ЗАКАЗ — ${totalPrice}₽`;
+        submitBtn.textContent = selectedTariff !== null
+            ? `ОФОРМИТЬ ЗАКАЗ — ${total}₽`
+            : `ОФОРМИТЬ ЗАКАЗ — ${braceletPrice}₽`;
         document.getElementById('checkoutError').textContent = '';
         document.getElementById('checkoutOverlay').classList.add('open');
     }
@@ -1716,7 +1715,8 @@
             return;
         }
 
-        const totalPrice = calculateTotalPrice();
+        const braceletPrice = calculateTotalPrice();
+        const totalPrice = braceletPrice + deliveryPrice;
         finishBtn.disabled = true;
         finishBtn.textContent = 'ОТПРАВКА...';
 
@@ -1802,7 +1802,7 @@
                 }
                 renderTariffs(data.tariffs);
             } catch (e) {
-                errorEl.textContent = 'Ошибка соединения с сервером';
+                errorEl.textContent = 'Не удалось рассчитать доставку. Оформите заказ — менеджер уточнит стоимость.';
                 list.innerHTML = '';
             } finally {
                 btn.disabled = false;
@@ -1838,10 +1838,14 @@
             const total = braceletPrice + deliveryPrice;
             document.getElementById('currentPrice').textContent = total + '₽';
             document.getElementById('totalPrice').value = total;
-            const ready = selectedLinks.length === requiredLinksCount && selectedTariff !== null;
+            const braceletReady = selectedLinks.length === requiredLinksCount;
             const btn = document.getElementById('submitBtn');
-            btn.style.display = ready ? 'block' : 'none';
-            if (ready) btn.textContent = `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`;
+            btn.style.display = braceletReady ? 'block' : 'none';
+            if (braceletReady) {
+                btn.textContent = selectedTariff !== null
+                    ? `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`
+                    : 'ОФОРМИТЬ ЗАКАЗ 🏁';
+            }
         }
 
     init();
