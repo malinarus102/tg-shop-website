@@ -1209,8 +1209,8 @@
         color: var(--red);
     }
 
-        /* ── SHOP CLOSED ── */
-        .pit-lane-closed {
+        /* ── SHOP CLOSED BANNER ── */
+        .closed-screen {
             display: none;
             position: fixed;
             inset: 0;
@@ -1220,97 +1220,97 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 32px;
-        }
-
-        .pit-lane-closed.show { display: flex; }
-
-        .pit-closed-flag {
-            font-size: 64px;
-            margin-bottom: 24px;
-            animation: flagWave 1.8s ease-in-out infinite;
-        }
-
-        @keyframes flagWave {
-            0%, 100% { transform: rotate(-8deg) scale(1); }
-            50%       { transform: rotate(8deg) scale(1.05); }
-        }
-
-        .pit-closed-eyebrow {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 13px;
-            letter-spacing: 6px;
-            color: var(--red);
-            margin-bottom: 16px;
-        }
-
-        .pit-closed-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(40px, 12vw, 72px);
-            letter-spacing: 4px;
-            line-height: 1;
-            margin-bottom: 20px;
-            color: #fff;
-        }
-
-        .pit-closed-title .accent { color: var(--red); }
-
-        .pit-closed-sub {
-            font-size: 15px;
-            color: rgba(255,255,255,0.45);
-            max-width: 320px;
-            line-height: 1.7;
-            margin-bottom: 36px;
-        }
-
-        .pit-closed-stripe {
-            display: flex;
-            gap: 0;
-            margin-bottom: 36px;
+            padding: 24px;
             overflow: hidden;
-            border-radius: 4px;
+        }
+        .closed-screen.show { display: flex; }
+
+        .closed-flag {
+            font-size: 56px;
+            margin-bottom: 28px;
+            animation: flagPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes flagPulse {
+            0%,100% { transform: scale(1); }
+            50%      { transform: scale(1.12); }
         }
 
-        .pit-stripe-cell {
-            width: 28px;
-            height: 10px;
-        }
-
-        .pit-closed-social {
-            font-size: 13px;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 0.5px;
-        }
-
-        .pit-closed-social a {
+        .closed-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 12px;
+            letter-spacing: 8px;
             color: var(--red);
-            text-decoration: none;
+            margin-bottom: 20px;
         }
+
+        .closed-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(48px, 14vw, 80px);
+            line-height: 1.0;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 20px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            padding: 0 8px;
+        }
+
+        .closed-title .accent { color: var(--red); }
+
+        .closed-stripe {
+            display: flex;
+            margin-bottom: 28px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .closed-stripe-cell {
+            width: 24px;
+            height: 8px;
+        }
+
+        .closed-sub {
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+            line-height: 1.7;
+            max-width: 280px;
+            margin-bottom: 8px;
+        }
+
+        .closed-tg {
+            font-size: 14px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .closed-tg a { color: var(--red); text-decoration: none; }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="pit-lane-closed" id="pitLaneClosed">
-    <div class="pit-closed-flag">🏁</div>
-    <div class="pit-closed-eyebrow">RED FLAG</div>
-    <div class="pit-closed-title">ПИТ-ЛЕЙН<br><span class="accent">ЗАКРЫТ</span></div>
-    <div class="pit-closed-stripe">
-        <div class="pit-stripe-cell" style="background:#fff"></div>
-        <div class="pit-stripe-cell" style="background:#080808"></div>
-        <div class="pit-stripe-cell" style="background:#fff"></div>
-        <div class="pit-stripe-cell" style="background:#080808"></div>
-        <div class="pit-stripe-cell" style="background:#fff"></div>
-        <div class="pit-stripe-cell" style="background:#080808"></div>
-        <div class="pit-stripe-cell" style="background:#fff"></div>
-        <div class="pit-stripe-cell" style="background:#080808"></div>
-        <div class="pit-stripe-cell" style="background:#fff"></div>
-        <div class="pit-stripe-cell" style="background:#080808"></div>
+<div class="closed-screen" id="closedScreen">
+    <div class="closed-flag">🏁</div>
+    <div class="closed-label">RED FLAG</div>
+    <div class="closed-title">
+        ПРОДАЖИ<br>
+        ВРЕМЕННО<br>
+        <span class="accent">ЗАКРЫТЫ</span>
     </div>
-    <div class="pit-closed-sub">
-        Заказы временно не принимаются.<br>
-        Скоро вернёмся на трассу — следите за обновлениями!
+    <div class="closed-stripe">
+        <div class="closed-stripe-cell" style="background:#fff"></div>
+        <div class="closed-stripe-cell" style="background:#080808"></div>
+        <div class="closed-stripe-cell" style="background:#fff"></div>
+        <div class="closed-stripe-cell" style="background:#080808"></div>
+        <div class="closed-stripe-cell" style="background:#fff"></div>
+        <div class="closed-stripe-cell" style="background:#080808"></div>
+        <div class="closed-stripe-cell" style="background:#fff"></div>
+        <div class="closed-stripe-cell" style="background:#080808"></div>
     </div>
-    <div class="pit-closed-social">Мы в Telegram: <a href="https://t.me/alinv1xf">@alinv1xf</a></div>
+    <div class="closed-sub">
+        Скоро вернёмся на трассу!<br>
+        Следите за обновлениями.
+    </div>
+    <div class="closed-tg">Telegram: <a href="https://t.me/alinv1xf">@alinv1xf</a></div>
 </div>
 
 <div class="container">
@@ -1550,17 +1550,8 @@
         fetch('/api/shop/status')
             .then(r => r.json())
             .then(data => {
-                if (!data.open) {
-                    document.querySelector('.container').innerHTML = `
-                        <div style="text-align:center;padding:80px 20px">
-                            <div style="font-size:48px;margin-bottom:20px">🔴</div>
-                            <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">
-                                Продажи временно<br><span style="color:var(--red)">приостановлены</span>
-                            </div>
-                            <div style="color:var(--text-muted);font-size:14px">
-                                Скоро вернёмся! Следите за обновлениями в Telegram 🏁
-                            </div>
-                        </div>`;
+                if (!data.is_open) {
+                    document.getElementById('closedScreen').classList.add('show');
                     return;
                 }
                 loadTeams();
@@ -1949,21 +1940,6 @@
             }
         }
 
-
-        // ── СТАТУС МАГАЗИНА ──
-        async function checkShopStatus() {
-            try {
-                const resp = await fetch('/api/shop/status');
-                const data = await resp.json();
-                if (!data.is_open) {
-                    document.getElementById('pitLaneClosed').classList.add('show');
-                }
-            } catch (e) {
-                // Если не смогли получить статус — не блокируем
-            }
-        }
-
-    checkShopStatus();
     init();
 </script>
 </body>
