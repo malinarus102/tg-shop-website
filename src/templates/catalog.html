@@ -1446,13 +1446,30 @@
     let requiredLinksCount = wristToLinks(wristSize);
 
     function init() {
-        fetch('/api/teams')
-            .then(r => r.json())
-            .then(teams => {
-                allTeams = teams;
-                renderTeams();
-            });
-    }
+    fetch('/api/shop/status')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.open) {
+                document.querySelector('.container').innerHTML = `
+                    <div style="text-align:center;padding:80px 20px">
+                        <div style="font-size:48px;margin-bottom:20px">🔴</div>
+                        <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">
+                            Продажи временно<br><span style="color:var(--red)">приостановлены</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:14px">
+                            Скоро вернёмся! Следите за обновлениями в Telegram 🏁
+                        </div>
+                    </div>`;
+                return;
+            }
+            fetch('/api/teams')
+                .then(r => r.json())
+                .then(teams => {
+                    allTeams = teams;
+                    renderTeams();
+                });
+        });
+}
 
     function renderTeams() {
         const grid = document.getElementById('teamsGrid');

@@ -7,11 +7,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Roboto', sans-serif;
@@ -82,9 +78,7 @@
             letter-spacing: 1px;
         }
 
-        .login-box button:hover {
-            background: #ff0000;
-        }
+        .login-box button:hover { background: #ff0000; }
 
         .error {
             color: #CC0000;
@@ -92,9 +86,7 @@
             font-weight: bold;
         }
 
-        .admin-panel {
-            display: none;
-        }
+        .admin-panel { display: none; }
 
         .admin-header {
             display: flex;
@@ -105,6 +97,8 @@
             border-bottom: 3px solid #CC0000;
             margin-bottom: 30px;
             border-radius: 6px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .admin-header h1 {
@@ -112,6 +106,13 @@
             color: #fff;
             text-transform: uppercase;
             letter-spacing: 2px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .logout-btn {
@@ -122,10 +123,71 @@
             cursor: pointer;
             font-weight: 700;
             border-radius: 4px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .logout-btn:hover {
-            background: #CC0000;
+        .logout-btn:hover { background: #CC0000; }
+
+        /* ── КНОПКА МАГАЗИНА ── */
+        .shop-toggle-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.25s;
+            min-width: 220px;
+            text-align: center;
+        }
+
+        .shop-toggle-btn.open {
+            background: rgba(34,139,34,0.25);
+            border: 2px solid #66BB6A;
+            color: #66BB6A;
+        }
+
+        .shop-toggle-btn.open:hover {
+            background: rgba(34,139,34,0.45);
+        }
+
+        .shop-toggle-btn.closed {
+            background: rgba(204,0,0,0.25);
+            border: 2px solid #CC0000;
+            color: #ff6666;
+        }
+
+        .shop-toggle-btn.closed:hover {
+            background: rgba(204,0,0,0.45);
+        }
+
+        /* ── BANNER ── */
+        .shop-status-banner {
+            display: none;
+            padding: 14px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 0.95em;
+            text-align: center;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .shop-status-banner.open {
+            background: rgba(34,139,34,0.15);
+            border: 1px solid #66BB6A;
+            color: #66BB6A;
+        }
+
+        .shop-status-banner.closed {
+            background: rgba(204,0,0,0.15);
+            border: 1px solid #CC0000;
+            color: #ff6666;
         }
 
         .admin-stats {
@@ -217,25 +279,11 @@
             text-transform: uppercase;
         }
 
-        .status-новый {
-            background: rgba(204, 0, 0, 0.3);
-            color: #ff6666;
-        }
-
-        .status-в_обработке {
-            background: rgba(255, 165, 0, 0.3);
-            color: #FFB84D;
-        }
-
-        .status-готов {
-            background: rgba(34, 139, 34, 0.3);
-            color: #66BB6A;
-        }
-
-        .status-отправлен {
-            background: rgba(30, 144, 255, 0.3);
-            color: #64B5F6;
-        }
+        .status-новый { background: rgba(204,0,0,0.3); color: #ff6666; }
+        .status-в_обработке { background: rgba(255,165,0,0.3); color: #FFB84D; }
+        .status-готов { background: rgba(34,139,34,0.3); color: #66BB6A; }
+        .status-отправлен { background: rgba(30,144,255,0.3); color: #64B5F6; }
+        .status-отменён { background: rgba(100,100,100,0.3); color: #aaa; }
 
         .order-info {
             display: grid;
@@ -247,7 +295,7 @@
 
         .order-info-item {
             padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0,0,0,0.3);
             border-radius: 4px;
             border-left: 3px solid #CC0000;
         }
@@ -259,22 +307,17 @@
             margin-bottom: 5px;
         }
 
-        .order-info-item .value {
-            color: #fff;
-            font-weight: 700;
-        }
+        .order-info-item .value { color: #fff; font-weight: 700; }
 
         .order-composition {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0,0,0,0.4);
             padding: 12px;
             border-radius: 4px;
             margin-bottom: 15px;
             font-size: 0.9em;
         }
 
-        .order-composition strong {
-            color: #CC0000;
-        }
+        .order-composition strong { color: #CC0000; }
 
         .btn {
             padding: 8px 16px;
@@ -287,18 +330,14 @@
             font-size: 0.9em;
         }
 
-        .btn:hover {
-            background: #ff0000;
-        }
+        .btn:hover { background: #ff0000; }
 
         .btn-delete {
             background: #333;
             border: 1px solid #666;
         }
 
-        .btn-delete:hover {
-            background: #555;
-        }
+        .btn-delete:hover { background: #555; }
 
         .order-actions {
             display: flex;
@@ -308,7 +347,7 @@
 
         .status-select {
             padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0,0,0,0.6);
             border: 1px solid #333;
             color: #fff;
             border-radius: 4px;
@@ -316,26 +355,12 @@
             cursor: pointer;
         }
 
-        .status-select:hover {
-            border-color: #CC0000;
-        }
+        .status-select:hover { border-color: #CC0000; }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #CC0000;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #ff0000;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb { background: #CC0000; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff0000; }
     </style>
 </head>
 <body>
@@ -354,8 +379,13 @@
                 <div>
                     <h1>🏁 F1 БРАСЛЕТЫ - АДМИН</h1>
                 </div>
-                <button class="logout-btn" onclick="handleLogout()">ВЫХОД</button>
+                <div class="header-controls">
+                    <button id="shopToggleBtn" class="shop-toggle-btn" onclick="toggleShop()">⏳ Загрузка...</button>
+                    <button class="logout-btn" onclick="handleLogout()">ВЫХОД</button>
+                </div>
             </div>
+
+            <div id="shopStatusBanner" class="shop-status-banner"></div>
 
             <div class="admin-stats">
                 <div class="stat-card">
@@ -387,6 +417,7 @@
 
     <script>
         let isLoggedIn = false;
+        let shopPassword = '';
 
         function handleLogin() {
             const password = document.getElementById('passwordInput').value;
@@ -398,59 +429,134 @@
             fetch('/api/admin/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({password: password})
+                body: JSON.stringify({password})
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     isLoggedIn = true;
+                    shopPassword = password;
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('adminPanel').style.display = 'block';
                     loadOrders();
+                    loadShopStatus();
                     setInterval(loadOrders, 5000);
                 } else {
                     document.getElementById('loginError').textContent = '❌ Неверный пароль';
                 }
             })
-            .catch(error => {
-                console.error('Ошибка:', error);
+            .catch(() => {
                 document.getElementById('loginError').textContent = '❌ Ошибка подключения';
             });
         }
 
         function handleLogout() {
             isLoggedIn = false;
+            shopPassword = '';
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('adminPanel').style.display = 'none';
             document.getElementById('passwordInput').value = '';
             document.getElementById('loginError').textContent = '';
         }
 
+        // ── УПРАВЛЕНИЕ МАГАЗИНОМ ──
+        function loadShopStatus() {
+            fetch('/api/shop/status')
+                .then(r => r.json())
+                .then(data => updateShopUI(data.open))
+                .catch(() => {});
+        }
+
+        function updateShopUI(isOpen) {
+            const btn = document.getElementById('shopToggleBtn');
+            const banner = document.getElementById('shopStatusBanner');
+
+            if (isOpen) {
+                btn.textContent = '🟢 ПРОДАЖИ ОТКРЫТЫ';
+                btn.className = 'shop-toggle-btn open';
+                banner.textContent = '✅ Магазин открыт — покупатели могут оформлять заказы';
+                banner.className = 'shop-status-banner open';
+            } else {
+                btn.textContent = '🔴 ПРОДАЖИ ЗАКРЫТЫ';
+                btn.className = 'shop-toggle-btn closed';
+                banner.textContent = '🚫 Магазин закрыт — покупатели видят заглушку';
+                banner.className = 'shop-status-banner closed';
+            }
+            banner.style.display = 'block';
+        }
+
+        function toggleShop() {
+            const btn = document.getElementById('shopToggleBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Применяем...';
+
+            fetch('/api/admin/shop/toggle', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: shopPassword})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    updateShopUI(data.open);
+                    const msg = data.open ? '✅ Продажи открыты!' : '🔴 Продажи закрыты!';
+                    showToast(msg);
+                } else {
+                    showToast('❌ Ошибка: ' + data.message);
+                }
+            })
+            .catch(() => showToast('❌ Ошибка соединения'))
+            .finally(() => { btn.disabled = false; });
+        }
+
+        // ── ТОСТ-УВЕДОМЛЕНИЕ ──
+        function showToast(message) {
+            const existing = document.getElementById('toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                background: #1a1a1a; border: 1px solid #CC0000; color: #fff;
+                padding: 12px 24px; border-radius: 6px; font-weight: 700;
+                font-size: 0.95em; z-index: 9999; animation: fadeIn 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ── ЗАКАЗЫ ──
         function loadOrders() {
             if (!isLoggedIn) return;
-
             fetch('/api/admin/orders')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(orders => {
                     renderOrders(orders);
                     updateStats(orders);
                 })
-                .catch(error => console.error('Ошибка загрузки:', error));
+                .catch(err => console.error('Ошибка загрузки:', err));
         }
 
         function renderOrders(orders) {
             const list = document.getElementById('ordersList');
 
             if (orders.length === 0) {
-                list.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">Заказы отсутствуют</div>';
+                list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">Заказы отсутствуют</div>';
                 return;
             }
 
             list.innerHTML = orders.map(order => {
                 const dateStr = new Date(order.createdAt).toLocaleString('ru-RU');
-                const composition = Object.entries(order.composition)
+                const composition = Object.entries(order.composition || {})
                     .map(([team, count]) => `${team}: ${count} звеньев`)
                     .join('<br>');
+
+                const deliveryRow = order.deliveryPrice
+                    ? `<div class="order-info-item"><div class="label">🚚 Доставка</div><div class="value">${order.deliveryPrice}₽</div></div>`
+                    : '';
 
                 return `
                     <div class="order-item">
@@ -477,7 +583,7 @@
                                 <div class="value">${order.userCity || 'Не указан'}</div>
                             </div>
                             <div class="order-info-item">
-                                <div class="label">📏 Размер запястья</div>
+                                <div class="label">📏 Запястье</div>
                                 <div class="value">${order.wristSize} см</div>
                             </div>
                             <div class="order-info-item">
@@ -488,6 +594,7 @@
                                 <div class="label">💰 Сумма</div>
                                 <div class="value">${order.totalPrice}₽</div>
                             </div>
+                            ${deliveryRow}
                         </div>
 
                         <div class="order-composition">
@@ -495,16 +602,17 @@
                             ${composition}
                         </div>
 
-                        <div style="font-size: 0.85em; color: #888; margin-bottom: 15px;">
+                        <div style="font-size:0.85em;color:#888;margin-bottom:15px">
                             ⏰ ${dateStr}
                         </div>
 
                         <div class="order-actions">
                             <select class="status-select" onchange="handleStatusChange(${order.id}, this.value)">
                                 <option value="новый" ${order.status === 'новый' ? 'selected' : ''}>Новый</option>
-                                <option value="в обработке" ${order.status === 'в обработке' ? 'selected' : ''}>В обработке</option>
+                                <option value="в работе" ${order.status === 'в работе' ? 'selected' : ''}>В работе</option>
                                 <option value="готов" ${order.status === 'готов' ? 'selected' : ''}>Готов</option>
                                 <option value="отправлен" ${order.status === 'отправлен' ? 'selected' : ''}>Отправлен</option>
+                                <option value="отменён" ${order.status === 'отменён' ? 'selected' : ''}>Отменён</option>
                             </select>
                             <button class="btn btn-delete" onclick="handleDelete(${order.id})">🗑️ УДАЛИТЬ</button>
                         </div>
@@ -515,14 +623,11 @@
 
         function updateStats(orders) {
             document.getElementById('totalOrders').textContent = orders.length;
-            
-            const totalRevenue = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+            const totalRevenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
             document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString('ru-RU') + '₽';
-            
             const newCount = orders.filter(o => o.status === 'новый').length;
             document.getElementById('newOrders').textContent = newCount;
-            
-            const totalLinks = orders.reduce((sum, o) => sum + o.linksCount, 0);
+            const totalLinks = orders.reduce((sum, o) => sum + (o.linksCount || 0), 0);
             document.getElementById('totalLinks').textContent = totalLinks;
         }
 
@@ -532,194 +637,29 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({status: newStatus})
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('✅ Статус обновлен');
-                loadOrders();
-            })
-            .catch(error => console.error('Ошибка:', error));
+            .then(r => r.json())
+            .then(() => { showToast('✅ Статус обновлён'); loadOrders(); })
+            .catch(err => console.error('Ошибка:', err));
         }
 
         function handleDelete(orderId) {
-            if (confirm('Вы уверены? Заказ будет удален.')) {
+            if (confirm('Удалить заказ #' + orderId + '?')) {
                 fetch(`/api/admin/order/${orderId}`, {method: 'DELETE'})
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('✅ Заказ удален');
-                        loadOrders();
-                    })
-                    .catch(error => console.error('Ошибка:', error));
+                    .then(r => r.json())
+                    .then(() => { showToast('🗑️ Заказ удалён'); loadOrders(); })
+                    .catch(err => console.error('Ошибка:', err));
             }
         }
 
-        function submitOrder() {
-            const totalPrice2 = calculateTotalPrice();
-
-            const userName = prompt('Введите ваше имя:');
-            if (!userName) return;
-
-            const userPhone = prompt('Введите номер телефона:');
-            if (!userPhone) return;
-
-            const userTg = prompt('Введите ваш Telegram (например, @username):');
-            if (!userTg) return;
-
-            const orderData = {
-                wristSize: wristSize,
-                linksCount: selectedLinks.length,
-                totalPrice: totalPrice2,
-                links: selectedLinks,
-                userName: userName,
-                userPhone: userPhone,
-                userTg: userTg
-            };
-
-            fetch('/api/order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showThankYouScreen(userName, totalPrice2);
-                } else {
-                    alert('❌ Ошибка: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error('Ошибка:', err);
-                alert('❌ Ошибка отправки заказа');
-            });
-        }
-
-        function calculateTotalPrice() {
-            let totalPrice = 700;
-            if (selectedLinks.length > 20) {
-                const extraLinks = selectedLinks.length - 20;
-                totalPrice += extraLinks * 40;
-            }
-            return totalPrice;
-        }
-
-        function showThankYouScreen(userName, totalPrice) {
-            // Создаем экран спасибки
-            const thankYouHTML = `
-                <div style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 9999;
-                ">
-                    <div style="
-                        background: linear-gradient(135deg, rgba(25,25,25,1) 0%, rgba(35,35,35,1) 100%);
-                        border: 3px solid #CC0000;
-                        padding: 60px 50px;
-                        border-radius: 8px;
-                        text-align: center;
-                        max-width: 500px;
-                        animation: slideIn 0.5s ease-out;
-                    ">
-                        <div style="font-size: 4em; margin-bottom: 20px;">✅</div>
-                        <h1 style="
-                            font-size: 2em;
-                            color: #fff;
-                            margin-bottom: 20px;
-                            text-transform: uppercase;
-                            letter-spacing: 2px;
-                        ">СПАСИБО ЗА ЗАКАЗ!</h1>
-                        
-                        <p style="
-                            font-size: 1.1em;
-                            color: #aaa;
-                            margin-bottom: 15px;
-                            line-height: 1.6;
-                        ">
-                            Привет, <strong style="color: #CC0000;">${userName}</strong>!<br><br>
-                            Ваш заказ успешно принят 🎉<br>
-                            <strong style="color: #fff; font-size: 1.2em;">Сумма: ${totalPrice}₽</strong>
-                        </p>
-
-                        <div style="
-                            background: rgba(204, 0, 0, 0.1);
-                            border-left: 4px solid #CC0000;
-                            padding: 20px;
-                            margin-bottom: 30px;
-                            border-radius: 4px;
-                            text-align: left;
-                        ">
-                            <p style="color: #fff; margin-bottom: 10px;">
-                                📞 <strong>Мы скоро свяжемся с вами</strong>
-                            </p>
-                            <p style="color: #aaa; font-size: 0.95em;">
-                                Администратор уже получил ваш заказ и свяжется через Telegram в ближайшее время 🚀
-                            </p>
-                        </div>
-
-                        <div style="margin-bottom: 30px;">
-                            <p style="color: #888; font-size: 0.9em;">
-                                Номер вашего заказа будет отправлен в личные сообщения
-                            </p>
-                        </div>
-
-                        <button onclick="location.reload()" style="
-                            width: 100%;
-                            padding: 16px;
-                            background: #CC0000;
-                            color: #fff;
-                            border: none;
-                            border-radius: 4px;
-                            font-weight: 700;
-                            font-size: 1.1em;
-                            cursor: pointer;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            transition: all 0.3s;
-                        " onmouseover="this.style.background='#ff0000'" onmouseout="this.style.background='#CC0000'">
-                            НОВЫЙ ЗАКАЗ
-                        </button>
-                    </div>
-                </div>
-
-                <style>
-                    @keyframes slideIn {
-                        from {
-                            opacity: 0;
-                            transform: translateY(-50px);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateY(0);
-                        }
-                    }
-                </style>
-            `;
-
-            // Вставляем на страницу
-            document.body.insertAdjacentHTML('beforeend', thankYouHTML);
-
-            // Через 5 секунд автоматически перезагрузим
-            setTimeout(() => {
-                location.reload();
-            }, 8000);
-        }
-
-        // Enter в поле пароля
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('passwordInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
+                if (e.key === 'Enter') handleLogin();
             });
         });
     </script>
+
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    </style>
 </body>
 </html>
