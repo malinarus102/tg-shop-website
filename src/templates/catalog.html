@@ -1615,6 +1615,8 @@
             .then(designs => {
                 const grid = document.getElementById('designsGrid');
                 selectedDesign = null;
+                window._currentDesigns = {};
+                designs.forEach(d => { window._currentDesigns[d.id] = d; });
                 grid.innerHTML = designs.map(design => `
                     <div class="design-card" id="dc_${design.id}" onclick="selectDesign('${design.id}', this)">
                         <img src="/api/pic/${design.image}" alt="${design.name}" loading="lazy">
@@ -1651,11 +1653,14 @@
         }
         const team = allTeams.find(t => t.id === selectedTeam);
         if (!team) return;
+        const design = (window._currentDesigns || {})[selectedDesign] || {};
         for (let i = 0; i < quantity; i++) {
             selectedLinks.push({
                 teamId: selectedTeam,
                 teamName: team.name,
                 designId: selectedDesign,
+                designName: design.name || selectedDesign,
+                designImage: design.image || selectedDesign,
                 color: team.color
             });
         }

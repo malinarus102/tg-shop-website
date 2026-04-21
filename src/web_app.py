@@ -68,6 +68,106 @@ def shop_status():
     """Текущий статус магазина — открыт или закрыт."""
     return jsonify({'is_open': shop_is_open})
 
+@app.route('/api/delivery/calculate', methods=['POST'])
+def calculate_delivery():
+    """Рассчитать стоимость доставки СДЭК."""
+    try:
+        data = request.json
+        city = data.get('city', '').strip()
+        order_price = data.get('orderPrice', 700)
+
+        if not city:
+            return jsonify({'success': False, 'message': 'Укажите город'}), 400
+
+        cdek_client_id = os.getenv('CDEK_CLIENT_ID', '')
+        cdek_client_secret = os.getenv('CDEK_CLIENT_SECRET', '')
+
+        # Получаем токен СДЭК
+        if cdek_client_id and cdek_client_secret:
+            token_resp = requests.post(
+                'https://api.cdek.ru/v2/oauth/token',
+                data={
+                    'grant_type': 'client_credentials',
+                    'client_id': cdek_client_id,
+                    'client_secret': cdek_client_secret
+                },
+                timeout=10
+            )
+            if token_resp.status_code != 200:
+                raise Exception('Не удалось получить токен СДЭК')
+            token = token_resp.json().get('access_token')
+
+            # Ищем код города
+            city_resp = requests.get(
+                'https://api.cdek.ru/v2/location/cities',
+                headers={'Authorization': f'Bearer {token}'},
+                params={'city': city, 'country_codes': 'RU', 'size': 1},
+                timeout=10
+            )
+            cities = city_resp.json()
+            if not cities:
+                return jsonify({'success': False, 'message': f'Город «{city}» не найден в базе СДЭК'}), 200
+
+            to_location = {'code': cities[0]['code']}
+
+            # Тарифы: ПВЗ (136), Курьер (137), Экономичный ПВЗ (234), Экономичный Курьер (233)
+            tariff_codes = [
+                (136, 'СДЭК Экспресс — до ПВЗ', 'ПВЗ'),
+                (137, 'СДЭК Экспресс — курьер', 'Курьер'),
+                (234, 'СДЭК Экономичный — до ПВЗ', 'ПВЗ'),
+                (233, 'СДЭК Экономичный — курьер', 'Курьер'),
+            ]
+
+            tariffs = []
+            for code, name, delivery_type in tariff_codes:
+                try:
+                    calc_resp = requests.post(
+                        'https://api.cdek.ru/v2/calculator/tariff',
+                        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+                        json={
+                            'tariff_code': code,
+                            'from_location': {'city': 'Москва'},
+                            'to_location': to_location,
+                            'packages': [{'weight': 50, 'length': 10, 'width': 7, 'height': 2}]
+                        },
+                        timeout=10
+                    )
+                    if calc_resp.status_code == 200:
+                        r = calc_resp.json()
+                        if 'total_sum' in r:
+                            tariffs.append({
+                                'tariff_code': code,
+                                'name': name,
+                                'delivery_type': delivery_type,
+                                'price': int(r['total_sum']),
+                                'period_min': r.get('period_min', 1),
+                                'period_max': r.get('period_max', 7),
+                            })
+                except Exception:
+                    continue
+
+            if not tariffs:
+                return jsonify({'success': False, 'message': 'Не удалось рассчитать тарифы для этого города'}), 200
+
+            tariffs.sort(key=lambda x: x['price'])
+            return jsonify({'success': True, 'tariffs': tariffs})
+
+        else:
+            # СДЭК не настроен — возвращаем фиксированные тарифы-заглушки
+            print("⚠️ CDEK_CLIENT_ID/SECRET не заданы — возвращаем фиксированные тарифы")
+            tariffs = [
+                {'tariff_code': 136, 'name': 'СДЭК — до ПВЗ', 'delivery_type': 'ПВЗ',
+                 'price': 250, 'period_min': 2, 'period_max': 5},
+                {'tariff_code': 137, 'name': 'СДЭК — курьер', 'delivery_type': 'Курьер',
+                 'price': 350, 'period_min': 2, 'period_max': 5},
+            ]
+            return jsonify({'success': True, 'tariffs': tariffs})
+
+    except Exception as e:
+        print(f"❌ Ошибка расчёта доставки: {e}")
+        return jsonify({'success': False, 'message': 'Ошибка расчёта доставки. Оформите заказ — менеджер уточнит стоимость.'}), 200
+
+
 @app.route('/api/admin/shop/toggle', methods=['POST'])
 def toggle_shop():
     """Открыть или закрыть приём заказов."""
@@ -131,11 +231,16 @@ def submit_order():
         user_tg = data.get('userTg', 'Не указан')
         user_city = data.get('userCity', 'Не указан')
 
-        # Подсчитываем звенья по командам
+        # Подсчитываем звенья по командам + детали дизайнов
         team_counts = {}
+        design_details = {}  # "TeamName / DesignId" -> count
         for link in links:
             team = link.get('teamName', 'Unknown')
             team_counts[team] = team_counts.get(team, 0) + 1
+            design_id = link.get('designId', '')
+            design_image = link.get('designImage', design_id)
+            key = f"{team} / {design_image}"
+            design_details[key] = design_details.get(key, 0) + 1
 
         # Сохраняем заказ в памяти
         order_counter += 1
@@ -145,12 +250,16 @@ def submit_order():
             'linksCount': links_count,
             'totalPrice': total_price,
             'composition': team_counts,
+            'designDetails': design_details,
+            'links': links,
             'userName': user_name,
             'userPhone': user_phone,
             'userTg': user_tg,
             'userCity': user_city,
             'createdAt': datetime.now().isoformat(),
-            'status': 'новый'
+            'status': 'новый',
+            'deliveryPrice': data.get('deliveryPrice', 0),
+            'deliveryTariff': data.get('deliveryTariff', None)
         }
         orders_storage.append(order_obj)
         save_orders_storage()
@@ -188,6 +297,12 @@ def submit_order():
         
         for team, count in sorted(team_counts.items()):
             message += f"\n  • {team}: {count} звеньев"
+
+        # Детальный состав по дизайнам
+        if design_details:
+            message += f"\n\n🎨 <b>ДИЗАЙНЫ:</b>"
+            for design_key, count in sorted(design_details.items()):
+                message += f"\n  · {design_key} × {count}"
         
         message += f"\n\n✅ Статус: <b>НОВЫЙ</b>"
         message += f"\n⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}"

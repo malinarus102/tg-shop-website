@@ -751,6 +751,14 @@
                 </div>
             `).join('');
 
+        const designDetails = Object.entries(order.designDetails || {})
+            .map(([key, count]) => `
+                <div class="composition-item" style="font-size:12px;color:var(--text-muted)">
+                    <span>🎨 ${key}</span>
+                    <span class="composition-count">× ${count}</span>
+                </div>
+            `).join('');
+
         const deliveryBlock = order.deliveryPrice
             ? `<div class="delivery-info">
                 🚚 <strong>СДЭК</strong> &nbsp;—&nbsp; ${order.deliveryPrice}₽
@@ -812,6 +820,7 @@
                 <div class="composition-block">
                     <div class="composition-label">Состав браслета</div>
                     ${composition || '<span style="color:var(--text-dim)">—</span>'}
+                    ${designDetails ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${designDetails}</div>` : ''}
                 </div>
 
                 <div class="order-actions-bar">
