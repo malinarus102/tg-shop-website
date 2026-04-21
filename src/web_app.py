@@ -60,7 +60,6 @@ def save_orders_storage():
 
 load_orders_storage()
 
-# Состояние магазина — открыт/закрыт
 shop_is_open = True
 
 @app.route('/api/shop/status')
@@ -82,7 +81,6 @@ def calculate_delivery():
         cdek_client_id = os.getenv('CDEK_CLIENT_ID', '')
         cdek_client_secret = os.getenv('CDEK_CLIENT_SECRET', '')
 
-        # Получаем токен СДЭК
         if cdek_client_id and cdek_client_secret:
             print(f"🚚 СДЭК: запрос токена для города '{city}'")
             token_resp = requests.post(
@@ -101,7 +99,6 @@ def calculate_delivery():
             if not token:
                 raise Exception('Токен СДЭК пустой')
 
-            # Ищем код города
             city_resp = requests.get(
                 'https://api.cdek.ru/v2/location/cities',
                 headers={'Authorization': f'Bearer {token}'},
@@ -141,7 +138,6 @@ def calculate_delivery():
                     )
                     print(f"🚚 Тариф {code}: status={calc_resp.status_code}, body={calc_resp.text[:300]}")
                     r = calc_resp.json()
-                    # СДЭК возвращает total_sum или delivery_sum
                     price = r.get('total_sum') or r.get('delivery_sum')
                     if price:
                         tariffs.append({
@@ -165,7 +161,6 @@ def calculate_delivery():
             return jsonify({'success': True, 'tariffs': tariffs})
 
         else:
-            # СДЭК не настроен — возвращаем фиксированные тарифы-заглушки
             print("⚠️ CDEK_CLIENT_ID/SECRET не заданы — возвращаем фиксированные тарифы")
             tariffs = [
                 {'tariff_code': 136, 'name': 'СДЭК — до ПВЗ', 'delivery_type': 'ПВЗ',
