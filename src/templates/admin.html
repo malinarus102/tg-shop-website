@@ -743,21 +743,34 @@
             hour: '2-digit', minute: '2-digit'
         });
 
-        const composition = Object.entries(order.composition || {})
-            .map(([team, count]) => `
-                <div class="composition-item">
-                    <span>${team}</span>
-                    <span class="composition-count">${count} зв.</span>
-                </div>
-            `).join('');
+        const braceletsCount = order.braceletsCount || 1;
+        const braceletsData  = order.bracelets || null;
 
-        const designDetails = Object.entries(order.designDetails || {})
-            .map(([key, count]) => `
-                <div class="composition-item" style="font-size:12px;color:var(--text-muted)">
-                    <span>🎨 ${key}</span>
-                    <span class="composition-count">× ${count}</span>
-                </div>
-            `).join('');
+        // Состав — один или несколько браслетов
+        let compositionHtml = '';
+        if (braceletsData && braceletsData.length > 1) {
+            compositionHtml = braceletsData.map(b => {
+                const comp = Object.entries(b.composition || {})
+                    .map(([team, count]) => `<div class="composition-item"><span>${team}</span><span class="composition-count">${count} зв.</span></div>`).join('');
+                const dd = Object.entries(b.designDetails || {})
+                    .map(([key, count]) => `<div class="composition-item" style="font-size:12px;color:var(--text-muted)"><span>🎨 ${key}</span><span class="composition-count">×${count}</span></div>`).join('');
+                const refIcon = b.referencePhotoPath ? ' 📎' : '';
+                return `<div style="margin-bottom:12px">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">
+                        Браслет ${b.braceletIndex}${refIcon} · ${b.wristSize} см · ${b.linksCount} зв. · ${b.price}₽
+                    </div>
+                    ${comp}
+                    ${dd ? `<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">${dd}</div>` : ''}
+                </div>`;
+            }).join('');
+        } else {
+            const composition = Object.entries(order.composition || {})
+                .map(([team, count]) => `<div class="composition-item"><span>${team}</span><span class="composition-count">${count} зв.</span></div>`).join('');
+            const designDetails = Object.entries(order.designDetails || {})
+                .map(([key, count]) => `<div class="composition-item" style="font-size:12px;color:var(--text-muted)"><span>🎨 ${key}</span><span class="composition-count">×${count}</span></div>`).join('');
+            compositionHtml = (composition || '<span style="color:var(--text-dim)">—</span>') +
+                (designDetails ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${designDetails}</div>` : '');
+        }
 
         const deliveryBlock = order.deliveryPrice
             ? `<div class="delivery-info">
@@ -766,13 +779,17 @@
                </div>`
             : '';
 
+        const countBadge = braceletsCount > 1
+            ? `<span style="font-size:11px;background:var(--red-dim);color:var(--red);border:1px solid rgba(232,0,45,0.25);border-radius:3px;padding:1px 6px;margin-left:6px;font-family:'Inter',sans-serif">${braceletsCount} бр.</span>`
+            : '';
+
         const isOpen = openOrderId === order.id;
 
         return `
         <div class="order-card ${isOpen ? 'open' : ''}" id="card-${order.id}">
             <div class="order-summary" onclick="toggleOrder(${order.id})">
                 <div class="order-chevron">▶</div>
-                <div class="order-num">#${order.id}</div>
+                <div class="order-num">#${order.id}${countBadge}</div>
                 <div class="order-client">
                     <div class="order-client-name">${order.userName || '—'}</div>
                     <div class="order-client-city">${order.userCity || ''} ${order.userTg || ''}</div>
@@ -802,15 +819,15 @@
                         <div class="detail-chip-val">${order.userCity || '—'}</div>
                     </div>
                     <div class="detail-chip">
-                        <div class="detail-chip-label">📏 Запястье</div>
-                        <div class="detail-chip-val">${order.wristSize} см</div>
+                        <div class="detail-chip-label">🛍️ Браслетов</div>
+                        <div class="detail-chip-val">${braceletsCount}</div>
                     </div>
                     <div class="detail-chip">
                         <div class="detail-chip-label">🔗 Звеньев</div>
                         <div class="detail-chip-val">${order.linksCount}</div>
                     </div>
                     <div class="detail-chip">
-                        <div class="detail-chip-label">💰 Браслет</div>
+                        <div class="detail-chip-label">💰 Браслет(ы)</div>
                         <div class="detail-chip-val">${order.totalPrice - (order.deliveryPrice || 0)}₽</div>
                     </div>
                 </div>
@@ -818,9 +835,8 @@
                 ${deliveryBlock}
 
                 <div class="composition-block">
-                    <div class="composition-label">Состав браслета</div>
-                    ${composition || '<span style="color:var(--text-dim)">—</span>'}
-                    ${designDetails ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${designDetails}</div>` : ''}
+                    <div class="composition-label">Состав ${braceletsCount > 1 ? 'браслетов' : 'браслета'}</div>
+                    ${compositionHtml}
                 </div>
 
                 <div class="order-actions-bar">

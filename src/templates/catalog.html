@@ -1433,7 +1433,7 @@
             </div>
         </div>
 
-        <div class="page-eyebrow">Шаг 3</div>
+        <div class="page-eyebrow" id="braceletIndexLabel">Шаг 3 · Браслет 1</div>
         <h1 class="page-title">СБОРКА<br><span class="accent">БРАСЛЕТА</span></h1>
 
         <div class="wrist-info-bar">
@@ -1466,6 +1466,29 @@
             <div id="summaryList"></div>
         </div>
 
+        <!-- ── РЕФЕРЕНС ФОТО ── -->
+        <div class="reference-section">
+            <div class="summary-section-title">Фото-референс <span style="font-size:10px;color:var(--text-dim);text-transform:none;letter-spacing:0;font-weight:400">(необязательно)</span></div>
+            <div class="reference-hint">Хотите браслет по своему референсу? Загрузите фото — мы постараемся повторить стиль</div>
+            <div class="reference-upload-zone" id="referenceZone" onclick="document.getElementById('referenceFileInput').click()">
+                <div class="reference-upload-icon">📎</div>
+                <div class="reference-upload-text">Нажмите чтобы загрузить фото</div>
+                <div class="reference-upload-hint">JPG, PNG до 5 МБ</div>
+            </div>
+            <input type="file" id="referenceFileInput" accept="image/*" style="display:none" onchange="handleReferenceUpload(this)">
+            <div class="reference-preview" id="referencePreview" style="display:none">
+                <img id="referenceImg" src="" alt="Референс">
+                <button class="reference-remove" onclick="removeReference()">✕ Убрать</button>
+            </div>
+        </div>
+
+        <!-- ── КОРЗИНА (остальные браслеты) ── -->
+        <div class="cart-section" id="cartSection" style="display:none">
+            <div class="summary-section-title">Все браслеты в заказе</div>
+            <div id="cartList"></div>
+        </div>
+
+        <!-- ── ДОСТАВКА ── -->
         <div class="delivery-section">
             <div class="summary-section-title">Доставка СДЭК <span style="font-size:10px;color:var(--text-dim);text-transform:none;letter-spacing:0;font-weight:400">(необязательно)</span></div>
             <div class="delivery-city-row">
@@ -1487,6 +1510,9 @@
 
         <button class="btn-primary" id="submitBtn" onclick="submitOrder()" style="display:none;">
             ОФОРМИТЬ ЗАКАЗ 🏁
+        </button>
+        <button class="btn-primary" id="addAnotherBtn" onclick="addAnotherBracelet()" style="display:none;background:var(--surface2);border:1px solid var(--border-hi);color:var(--text);box-shadow:none;">
+            + ДОБАВИТЬ ЕЩЁ БРАСЛЕТ
         </button>
         <button class="btn-ghost" onclick="goToScreen3()">+ Добавить ещё звенья</button>
     </div>
@@ -1532,19 +1558,228 @@
     <button class="btn-primary" style="max-width:280px" onclick="location.reload()">НОВЫЙ ЗАКАЗ</button>
 </div>
 
+
+<!-- ═══ CHECKOUT MODAL ═══ -->
+<div id="checkoutOverlay" class="overlay">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-eyebrow">Финишная прямая</div>
+        <div class="modal-title">Финишный <span class="accent">Пит&#8209;Стоп</span></div>
+        <div class="modal-subtitle">Заполните данные для оформления заказа</div>
+
+        <div class="field">
+            <label>Telegram</label>
+            <input id="checkoutTg" type="text" placeholder="@username">
+        </div>
+        <div class="field">
+            <label>Город доставки</label>
+            <input id="checkoutCity" type="text" placeholder="Москва">
+        </div>
+        <div class="field">
+            <label>Телефон</label>
+            <input id="checkoutPhone" type="tel" placeholder="+7 999 000-00-00">
+        </div>
+
+        <div id="checkoutError" class="checkout-error"></div>
+
+        <button class="btn-primary" id="finishPitStopBtn" onclick="finishPitStop()">ПОДТВЕРДИТЬ ЗАКАЗ 🏁</button>
+        <button class="btn-ghost" onclick="closeCheckoutModal()">Отмена</button>
+    </div>
+</div>
+
+<!-- ═══ THANK YOU ═══ -->
+<div id="thankYouOverlay" class="thankyou-overlay">
+    <div class="thankyou-checkered">🏁</div>
+    <div class="thankyou-title">ЗАКАЗ<br><span style="color:var(--red)">ПРИНЯТ!</span></div>
+    <div class="thankyou-divider"></div>
+    <div class="thankyou-sub">
+        Добро пожаловать в паддок! Мы свяжемся с вами в ближайшее время для подтверждения деталей.
+    </div>
+    <button class="btn-primary" style="max-width:280px" onclick="location.reload()">НОВЫЙ ЗАКАЗ</button>
+</div>
+
+<style>
+/* ── РЕФЕРЕНС ФОТО ── */
+.reference-section { margin-bottom: 20px; }
+
+.reference-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.reference-upload-zone {
+    border: 2px dashed var(--border-hi);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.reference-upload-zone:hover {
+    border-color: var(--red);
+    background: var(--red-dim);
+}
+
+.reference-upload-icon { font-size: 24px; margin-bottom: 6px; }
+
+.reference-upload-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+
+.reference-upload-hint { font-size: 11px; color: var(--text-dim); }
+
+.reference-preview {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-hi);
+}
+
+.reference-preview img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.reference-remove {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.reference-remove:hover { background: var(--red); }
+
+/* ── КОРЗИНА БРАСЛЕТОВ ── */
+.cart-section { margin-bottom: 20px; }
+
+.cart-bracelet-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cart-bracelet-card.current {
+    border-color: var(--red);
+    background: var(--red-dim);
+}
+
+.cart-bracelet-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text-dim);
+    min-width: 28px;
+    line-height: 1;
+}
+
+.cart-bracelet-card.current .cart-bracelet-num { color: var(--red); }
+
+.cart-bracelet-info { flex: 1; }
+
+.cart-bracelet-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+.cart-bracelet-sub { font-size: 11px; color: var(--text-muted); }
+
+.cart-bracelet-mini-colors {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.cart-mini-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.cart-bracelet-price {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.cart-bracelet-del {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    width: 28px; height: 28px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.cart-bracelet-del:hover { border-color: var(--red); color: var(--red); }
+
+.cart-editing-badge {
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--red);
+    padding: 2px 7px;
+    border: 1px solid rgba(232,0,45,0.3);
+    border-radius: 3px;
+    white-space: nowrap;
+}
+</style>
+
 <script>
     let allTeams = [];
     let selectedTeam = null;
     let selectedDesign = null;
-    let selectedLinks = [];
     let quantityValue = 1;
+
+    // ── КОРЗИНА ──
+    // cart = [{ id, wristSize, requiredLinksCount, links: [...], referencePhoto: null|{dataUrl, name} }, ...]
+    let cart = [];
+    let currentBraceletIndex = 0;
+    let nextBraceletId = 1;
+
+    function curB() { return cart[currentBraceletIndex]; }
 
     function wristToLinks(wristCm) {
         return Math.max(1, Math.floor(wristCm) + 1);
     }
 
-    let wristSize = 17;
-    let requiredLinksCount = wristToLinks(wristSize);
+    // Для совместимости — «текущие» size/count берём из curB()
+    function getWristSize()         { return curB()?.wristSize ?? 17; }
+    function getRequiredLinksCount(){ return curB()?.requiredLinksCount ?? wristToLinks(17); }
 
     function init() {
         fetch('/api/shop/status')
@@ -1601,10 +1836,17 @@
             setTimeout(() => wristInput.style.borderColor = '', 1500);
             return false;
         }
-        wristSize = parsedWrist;
-        requiredLinksCount = wristToLinks(wristSize);
-        document.getElementById('wristSizeDisplay').textContent = wristSize;
-        document.getElementById('requiredLinksDisplay').textContent = requiredLinksCount;
+        // Применяем к текущему браслету
+        if (cart.length === 0) {
+            // первый браслет — создаём
+            cart.push({ id: nextBraceletId++, wristSize: parsedWrist, requiredLinksCount: wristToLinks(parsedWrist), links: [], referencePhoto: null });
+            currentBraceletIndex = 0;
+        } else {
+            curB().wristSize = parsedWrist;
+            curB().requiredLinksCount = wristToLinks(parsedWrist);
+        }
+        document.getElementById('wristSizeDisplay').textContent = parsedWrist;
+        document.getElementById('requiredLinksDisplay').textContent = wristToLinks(parsedWrist);
         updateRemainingLinksHint();
         return true;
     }
@@ -1633,7 +1875,7 @@
     }
 
     function changeQty(delta) {
-        const remaining = requiredLinksCount - selectedLinks.length;
+        const remaining = getRequiredLinksCount() - curB().links.length;
         quantityValue = Math.max(1, Math.min(remaining, quantityValue + delta));
         document.getElementById('quantityDisplay').textContent = quantityValue;
         document.getElementById('quantityInput').value = quantityValue;
@@ -1645,9 +1887,9 @@
             return;
         }
         const quantity = quantityValue;
-        const currentTotal = selectedLinks.length + quantity;
-        if (currentTotal > requiredLinksCount) {
-            const canAdd = requiredLinksCount - selectedLinks.length;
+        const currentTotal = curB().links.length + quantity;
+        if (currentTotal > getRequiredLinksCount()) {
+            const canAdd = getRequiredLinksCount() - curB().links.length;
             alert(`Можно добавить ещё ${canAdd} звеньев`);
             return;
         }
@@ -1655,7 +1897,7 @@
         if (!team) return;
         const design = (window._currentDesigns || {})[selectedDesign] || {};
         for (let i = 0; i < quantity; i++) {
-            selectedLinks.push({
+            curB().links.push({
                 teamId: selectedTeam,
                 teamName: team.name,
                 designId: selectedDesign,
@@ -1670,14 +1912,16 @@
         updateProgress();
         updateRemainingLinksHint();
 
-        if (selectedLinks.length === requiredLinksCount) {
+        if (curB().links.length === getRequiredLinksCount()) {
             goToScreen4();
         }
     }
 
     function updateProgress() {
-        const currentCount = selectedLinks.length;
-        const percent = Math.min(100, Math.round((currentCount / requiredLinksCount) * 100));
+        const links = curB()?.links ?? [];
+        const required = getRequiredLinksCount();
+        const currentCount = links.length;
+        const percent = Math.min(100, Math.round((currentCount / required) * 100));
         document.getElementById('progressFill').style.width = percent + '%';
         document.getElementById('progressPercent').innerHTML = percent + '<span class="total">%</span>';
         document.getElementById('linksCountDisplay').textContent = currentCount;
@@ -1687,11 +1931,13 @@
 
     function updateBraceletVisual() {
         const visual = document.getElementById('braceletVisual');
+        const links = curB()?.links ?? [];
+        const required = getRequiredLinksCount();
         let html = '';
-        selectedLinks.forEach(link => {
+        links.forEach(link => {
             html += `<div class="link-dot" style="background:${link.color}" title="${link.teamName}"></div>`;
         });
-        const empty = requiredLinksCount - selectedLinks.length;
+        const empty = required - links.length;
         for (let i = 0; i < empty; i++) {
             html += `<div class="link-dot-empty"></div>`;
         }
@@ -1700,20 +1946,21 @@
 
     function updateSummary() {
         const list = document.getElementById('summaryList');
-        const linksCount = selectedLinks.length;
+        const links = curB()?.links ?? [];
+        const linksCount = links.length;
 
-        let totalPrice = 700;
-        if (linksCount > 20) totalPrice += (linksCount - 20) * 40;
+        let braceletPrice = calcBraceletPrice(linksCount);
 
-        if (selectedLinks.length === 0) {
+        if (links.length === 0) {
             list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Звенья не выбраны</p>';
             document.getElementById('totalPrice').value = '0';
             document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('addAnotherBtn').style.display = 'none';
             return;
         }
 
         const groups = {};
-        selectedLinks.forEach(link => {
+        links.forEach(link => {
             if (!groups[link.teamId]) groups[link.teamId] = { ...link, count: 0 };
             groups[link.teamId].count++;
         });
@@ -1729,27 +1976,36 @@
             </div>
         `).join('');
 
-        document.getElementById('currentPrice').textContent = totalPrice + '₽';
-        document.getElementById('totalPrice').value = totalPrice;
-        // Обновляем итог и кнопку — через единую функцию
+        document.getElementById('currentPrice').textContent = calculateTotalPrice() + '₽';
+        document.getElementById('totalPrice').value = calculateTotalPrice();
         updateTotalWithDelivery();
     }
 
     function removeLinks(teamId) {
-        selectedLinks = selectedLinks.filter(l => l.teamId !== teamId);
+        curB().links = curB().links.filter(l => l.teamId !== teamId);
         updateProgress();
         updateRemainingLinksHint();
     }
 
     function updateRemainingLinksHint() {
-        const remaining = Math.max(0, requiredLinksCount - selectedLinks.length);
+        const remaining = Math.max(0, getRequiredLinksCount() - (curB()?.links.length ?? 0));
         document.getElementById('remainingLinksHint').textContent = remaining;
     }
 
-    function calculateTotalPrice() {
+    function calcBraceletPrice(linksCount) {
         let p = 700;
-        if (selectedLinks.length > 20) p += (selectedLinks.length - 20) * 40;
+        if (linksCount > 20) p += (linksCount - 20) * 40;
         return p;
+    }
+
+    function calculateTotalPrice() {
+        // Сумма всех браслетов в корзине
+        const braceletsTotal = cart.reduce((sum, b) => sum + calcBraceletPrice(b.links.length), 0);
+        return braceletsTotal + deliveryPrice;
+    }
+
+    function calcCartBraceletsTotal() {
+        return cart.reduce((sum, b) => sum + calcBraceletPrice(b.links.length), 0);
     }
 
     function showScreen(id) {
@@ -1767,27 +2023,85 @@
 
     function goToScreen4() {
         showScreen('screen4');
-        document.getElementById('wristSizeDisplay').textContent = wristSize;
-        document.getElementById('requiredLinksDisplay').textContent = requiredLinksCount;
+        const b = curB();
+        document.getElementById('wristSizeDisplay').textContent = b.wristSize;
+        document.getElementById('requiredLinksDisplay').textContent = b.requiredLinksCount;
+        document.getElementById('braceletIndexLabel').textContent = `Шаг 3 · Браслет ${currentBraceletIndex + 1}`;
         updateProgress();
+        renderCart();
+    }
+
+    // ── КОРЗИНА: рендер всех браслетов ──
+    function renderCart() {
+        const section = document.getElementById('cartSection');
+        const list = document.getElementById('cartList');
+
+        if (cart.length <= 1) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+
+        list.innerHTML = cart.map((b, idx) => {
+            const isCurrent = idx === currentBraceletIndex;
+            const price = calcBraceletPrice(b.links.length);
+            const miniColors = [...new Map(b.links.map(l => [l.teamId, l.color])).entries()]
+                .map(([, color]) => `<div class="cart-mini-dot" style="background:${color}"></div>`).join('');
+            const teamNames = [...new Set(b.links.map(l => l.teamName))].join(', ') || '—';
+            const photoIcon = b.referencePhoto ? ' 📎' : '';
+            return `
+            <div class="cart-bracelet-card ${isCurrent ? 'current' : ''}">
+                <div class="cart-bracelet-num">${idx + 1}</div>
+                <div class="cart-bracelet-info">
+                    <div class="cart-bracelet-title">Браслет ${idx + 1}${photoIcon} &nbsp; ${isCurrent ? '<span class="cart-editing-badge">редактируется</span>' : ''}</div>
+                    <div class="cart-bracelet-sub">${b.wristSize} см · ${b.links.length} зв. · ${teamNames}</div>
+                    <div class="cart-bracelet-mini-colors">${miniColors}</div>
+                </div>
+                <div class="cart-bracelet-price">${price}₽</div>
+                ${cart.length > 1 && !isCurrent ? `<button class="cart-bracelet-del" onclick="removeBraceletFromCart(${idx})" title="Удалить">✕</button>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    // ── ДОБАВИТЬ ЕЩЁ БРАСЛЕТ ──
+    function addAnotherBracelet() {
+        // Создаём новый браслет и переходим к экрану выбора команды
+        const newB = { id: nextBraceletId++, wristSize: 17, requiredLinksCount: wristToLinks(17), links: [], referencePhoto: null };
+        cart.push(newB);
+        currentBraceletIndex = cart.length - 1;
+
+        // Сбрасываем поле размера запястья
+        document.getElementById('startWristInput').value = 17;
+        selectedTeam = null;
+        selectedDesign = null;
+        quantityValue = 1;
+
+        showScreen('screen1');
+        window.scrollTo(0, 0);
+    }
+
+    function removeBraceletFromCart(idx) {
+        if (cart.length <= 1) return;
+        cart.splice(idx, 1);
+        if (currentBraceletIndex >= cart.length) currentBraceletIndex = cart.length - 1;
+        renderCart();
+        updateTotalWithDelivery();
     }
 
     function submitOrder() {
-        if (selectedLinks.length !== requiredLinksCount) {
-            alert(`Нужно ровно ${requiredLinksCount} звеньев`);
+        const b = curB();
+        if (!b || b.links.length !== b.requiredLinksCount) {
+            alert(`Нужно ровно ${b?.requiredLinksCount ?? '?'} звеньев`);
             return;
         }
         openCheckoutModal();
     }
 
     function openCheckoutModal() {
-        const braceletPrice = calculateTotalPrice();
-        const total = braceletPrice + deliveryPrice;
+        const total = calculateTotalPrice();
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
-        submitBtn.textContent = selectedTariff !== null
-            ? `ОФОРМИТЬ ЗАКАЗ — ${total}₽`
-            : `ОФОРМИТЬ ЗАКАЗ — ${braceletPrice}₽`;
+        submitBtn.textContent = `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`;
         document.getElementById('checkoutError').textContent = '';
         document.getElementById('checkoutOverlay').classList.add('open');
     }
@@ -1799,7 +2113,7 @@
         submitBtn.textContent = 'ОФОРМИТЬ ЗАКАЗ 🏁';
     }
 
-    function finishPitStop() {
+    async function finishPitStop() {
         const userTg    = document.getElementById('checkoutTg').value.trim();
         const userCity  = document.getElementById('checkoutCity').value.trim();
         const userPhone = document.getElementById('checkoutPhone').value.trim();
@@ -1812,138 +2126,194 @@
             return;
         }
 
-        const braceletPrice = calculateTotalPrice();
-        const totalPrice = braceletPrice + deliveryPrice;
+        const totalPrice = calculateTotalPrice();
         finishBtn.disabled = true;
         finishBtn.textContent = 'ОТПРАВКА...';
 
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         const tgInitData = window.Telegram?.WebApp?.initData ?? '';
+
+        // Собираем данные всех браслетов
+        const braceletsData = cart.map((b, idx) => {
+            const teamCounts = {};
+            const designDetails = {};
+            b.links.forEach(link => {
+                teamCounts[link.teamName] = (teamCounts[link.teamName] || 0) + 1;
+                const key = `${link.teamName} / ${link.designImage || link.designId}`;
+                designDetails[key] = (designDetails[key] || 0) + 1;
+            });
+            return {
+                braceletIndex: idx + 1,
+                wristSize: b.wristSize,
+                linksCount: b.links.length,
+                price: calcBraceletPrice(b.links.length),
+                composition: teamCounts,
+                designDetails,
+                links: b.links,
+                referencePhoto: b.referencePhoto ? b.referencePhoto.dataUrl : null,
+                referencePhotoName: b.referencePhoto ? b.referencePhoto.name : null,
+            };
+        });
+
         const orderData = {
-            wristSize:  wristSize,
-            linksCount: selectedLinks.length,
-            totalPrice: totalPrice,
-            links:      selectedLinks,
-            userName:   userTg,
-            userPhone:  userPhone,
-            userTg:     userTg,
-            userCity:   userCity,
-            userTgId:   tgUser?.id ?? null,
+            bracelets:      braceletsData,
+            braceletsCount: cart.length,
+            // legacy поля для совместимости (первый браслет)
+            wristSize:      braceletsData[0].wristSize,
+            linksCount:     braceletsData[0].linksCount,
+            totalPrice,
+            links:          braceletsData[0].links,
+            userName:       userTg,
+            userPhone,
+            userTg,
+            userCity,
+            userTgId:       tgUser?.id ?? null,
             initData:       tgInitData,
-            deliveryPrice:  deliveryPrice,
+            deliveryPrice,
             deliveryTariff: selectedTariff
         };
 
-        fetch('/api/order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        })
-        .then(async response => {
+        try {
+            const response = await fetch('/api/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.message || 'Ошибка сервера');
-            return payload;
-        })
-        .then(data => {
-            if (data.success) {
+            if (payload.success) {
                 closeCheckoutModal();
                 document.getElementById('thankYouOverlay').classList.add('show');
                 setTimeout(() => location.reload(), 8000);
             } else {
-                errorBox.textContent = 'Ошибка: ' + data.message;
+                errorBox.textContent = 'Ошибка: ' + payload.message;
                 finishBtn.disabled = false;
                 finishBtn.textContent = 'ПОДТВЕРДИТЬ ЗАКАЗ 🏁';
             }
-        })
-        .catch(err => {
+        } catch(err) {
             errorBox.textContent = 'Ошибка отправки: ' + err.message;
             finishBtn.disabled = false;
             finishBtn.textContent = 'ПОДТВЕРДИТЬ ЗАКАЗ 🏁';
             submitBtn.disabled = false;
-        });
+        }
     }
 
+    // ── РЕФЕРЕНС ФОТО ──
+    function handleReferenceUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Файл слишком большой. Максимум 5 МБ.');
+            input.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            curB().referencePhoto = { dataUrl, name: file.name };
+            document.getElementById('referenceImg').src = dataUrl;
+            document.getElementById('referenceZone').style.display = 'none';
+            document.getElementById('referencePreview').style.display = 'block';
+            renderCart(); // обновить иконку 📎 в корзине
+        };
+        reader.readAsDataURL(file);
+    }
 
-        // ── ДОСТАВКА СДЭК ──
-        let selectedTariff = null;
-        let deliveryPrice = 0;
+    function removeReference() {
+        curB().referencePhoto = null;
+        document.getElementById('referenceFileInput').value = '';
+        document.getElementById('referenceImg').src = '';
+        document.getElementById('referenceZone').style.display = 'block';
+        document.getElementById('referencePreview').style.display = 'none';
+        renderCart();
+    }
 
-        async function calcDelivery() {
-            const city = document.getElementById('deliveryCity').value.trim();
-            const errorEl = document.getElementById('deliveryError');
-            const btn = document.getElementById('calcDeliveryBtn');
-            const list = document.getElementById('tariffsList');
+    // ── ДОСТАВКА СДЭК ──
+    let selectedTariff = null;
+    let deliveryPrice = 0;
 
-            if (!city) { errorEl.textContent = 'Введите город доставки'; return; }
+    async function calcDelivery() {
+        const city = document.getElementById('deliveryCity').value.trim();
+        const errorEl = document.getElementById('deliveryError');
+        const btn = document.getElementById('calcDeliveryBtn');
+        const list = document.getElementById('tariffsList');
 
-            errorEl.textContent = '';
-            btn.disabled = true;
-            btn.textContent = 'Считаем...';
-            list.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ Запрос в СДЭК...</div>';
-            selectedTariff = null;
-            deliveryPrice = 0;
-            updateTotalWithDelivery();
+        if (!city) { errorEl.textContent = 'Введите город доставки'; return; }
 
-            try {
-                const orderPrice = calculateTotalPrice();
-                const resp = await fetch('/api/delivery/calculate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ city, orderPrice })
-                });
-                const data = await resp.json();
-                if (!data.success) {
-                    errorEl.textContent = data.message || 'Ошибка расчёта';
-                    list.innerHTML = '';
-                    return;
-                }
-                renderTariffs(data.tariffs);
-            } catch (e) {
-                errorEl.textContent = 'Не удалось рассчитать доставку. Оформите заказ — менеджер уточнит стоимость.';
+        errorEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Считаем...';
+        list.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ Запрос в СДЭК...</div>';
+        selectedTariff = null;
+        deliveryPrice = 0;
+        updateTotalWithDelivery();
+
+        try {
+            const orderPrice = calcCartBraceletsTotal();
+            const resp = await fetch('/api/delivery/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city, orderPrice })
+            });
+            const data = await resp.json();
+            if (!data.success) {
+                errorEl.textContent = data.message || 'Ошибка расчёта';
                 list.innerHTML = '';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Рассчитать';
+                return;
             }
+            renderTariffs(data.tariffs);
+        } catch (e) {
+            errorEl.textContent = 'Не удалось рассчитать доставку. Оформите заказ — менеджер уточнит стоимость.';
+            list.innerHTML = '';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Рассчитать';
         }
+    }
 
-        function renderTariffs(tariffs) {
-            const list = document.getElementById('tariffsList');
-            list.innerHTML = tariffs.map(t => `
-                <div class="tariff-item" onclick="selectTariff(${t.tariff_code}, ${t.price}, this)">
-                    <div class="tariff-radio"><div class="tariff-radio-dot"></div></div>
-                    <div class="tariff-info">
-                        <div class="tariff-name">${t.name}</div>
-                        <div class="tariff-days">${t.period_min}–${t.period_max} дней</div>
-                    </div>
-                    <span class="tariff-type-badge">${t.delivery_type}</span>
-                    <div class="tariff-price">${t.price}₽</div>
+    function renderTariffs(tariffs) {
+        const list = document.getElementById('tariffsList');
+        list.innerHTML = tariffs.map(t => `
+            <div class="tariff-item" onclick="selectTariff(${t.tariff_code}, ${t.price}, this)">
+                <div class="tariff-radio"><div class="tariff-radio-dot"></div></div>
+                <div class="tariff-info">
+                    <div class="tariff-name">${t.name}</div>
+                    <div class="tariff-days">${t.period_min}–${t.period_max} дней</div>
                 </div>
-            `).join('');
-        }
+                <span class="tariff-type-badge">${t.delivery_type}</span>
+                <div class="tariff-price">${t.price}₽</div>
+            </div>
+        `).join('');
+    }
 
-        function selectTariff(code, price, el) {
-            document.querySelectorAll('.tariff-item').forEach(i => i.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedTariff = code;
-            deliveryPrice = price;
-            updateTotalWithDelivery();
-        }
+    function selectTariff(code, price, el) {
+        document.querySelectorAll('.tariff-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedTariff = code;
+        deliveryPrice = price;
+        updateTotalWithDelivery();
+    }
 
-        function updateTotalWithDelivery() {
-            const braceletPrice = calculateTotalPrice();
-            const total = braceletPrice + deliveryPrice;
-            document.getElementById('currentPrice').textContent = total + '₽';
-            document.getElementById('totalPrice').value = total;
-            const braceletReady = selectedLinks.length === requiredLinksCount;
-            const btn = document.getElementById('submitBtn');
-            btn.style.display = braceletReady ? 'block' : 'none';
-            if (braceletReady) {
-                btn.textContent = selectedTariff !== null
-                    ? `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`
-                    : 'ОФОРМИТЬ ЗАКАЗ 🏁';
-            }
+    function updateTotalWithDelivery() {
+        const braceletsTotal = calcCartBraceletsTotal();
+        const total = braceletsTotal + deliveryPrice;
+        document.getElementById('currentPrice').textContent = total + '₽';
+        document.getElementById('totalPrice').value = total;
+
+        const b = curB();
+        const braceletReady = b && b.links.length === b.requiredLinksCount;
+        const submitBtn = document.getElementById('submitBtn');
+        const addAnotherBtn = document.getElementById('addAnotherBtn');
+
+        submitBtn.style.display = braceletReady ? 'block' : 'none';
+        addAnotherBtn.style.display = braceletReady ? 'block' : 'none';
+
+        if (braceletReady) {
+            submitBtn.textContent = selectedTariff !== null
+                ? `ОФОРМИТЬ ЗАКАЗ — ${total}₽ 🏁`
+                : `ОФОРМИТЬ ЗАКАЗ${cart.length > 1 ? ' (' + cart.length + ' бр.)' : ''} 🏁`;
         }
+    }
 
     init();
 </script>

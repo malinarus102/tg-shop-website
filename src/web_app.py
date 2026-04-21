@@ -60,6 +60,7 @@ def save_orders_storage():
 
 load_orders_storage()
 
+# Состояние магазина — открыт/закрыт
 shop_is_open = True
 
 @app.route('/api/shop/status')
@@ -81,6 +82,7 @@ def calculate_delivery():
         cdek_client_id = os.getenv('CDEK_CLIENT_ID', '')
         cdek_client_secret = os.getenv('CDEK_CLIENT_SECRET', '')
 
+        # Получаем токен СДЭК
         if cdek_client_id and cdek_client_secret:
             print(f"🚚 СДЭК: запрос токена для города '{city}'")
             token_resp = requests.post(
@@ -99,6 +101,7 @@ def calculate_delivery():
             if not token:
                 raise Exception('Токен СДЭК пустой')
 
+            # Ищем код города
             city_resp = requests.get(
                 'https://api.cdek.ru/v2/location/cities',
                 headers={'Authorization': f'Bearer {token}'},
@@ -138,6 +141,7 @@ def calculate_delivery():
                     )
                     print(f"🚚 Тариф {code}: status={calc_resp.status_code}, body={calc_resp.text[:300]}")
                     r = calc_resp.json()
+                    # СДЭК возвращает total_sum или delivery_sum
                     price = r.get('total_sum') or r.get('delivery_sum')
                     if price:
                         tariffs.append({
@@ -161,6 +165,7 @@ def calculate_delivery():
             return jsonify({'success': True, 'tariffs': tariffs})
 
         else:
+            # СДЭК не настроен — возвращаем фиксированные тарифы-заглушки
             print("⚠️ CDEK_CLIENT_ID/SECRET не заданы — возвращаем фиксированные тарифы")
             tariffs = [
                 {'tariff_code': 136, 'name': 'СДЭК — до ПВЗ', 'delivery_type': 'ПВЗ',
@@ -228,104 +233,147 @@ def submit_order():
         return jsonify({'success': False, 'message': 'Магазин временно закрыт'}), 503
     try:
         data = request.json
-        
-        wrist_size = data.get('wristSize', 0)
-        links_count = data.get('linksCount', 0)
-        total_price = data.get('totalPrice', 0)
-        links = data.get('links', [])
-        user_name = data.get('userName', 'Аноним')
+
+        user_name  = data.get('userName', 'Аноним')
         user_phone = data.get('userPhone', 'Не указан')
-        user_tg = data.get('userTg', 'Не указан')
-        user_city = data.get('userCity', 'Не указан')
+        user_tg    = data.get('userTg', 'Не указан')
+        user_city  = data.get('userCity', 'Не указан')
+        total_price     = data.get('totalPrice', 0)
+        delivery_price  = data.get('deliveryPrice', 0)
+        delivery_tariff = data.get('deliveryTariff', None)
 
-        # Подсчитываем звенья по командам + детали дизайнов
-        team_counts = {}
-        design_details = {}  # "TeamName / DesignId" -> count
-        for link in links:
-            team = link.get('teamName', 'Unknown')
-            team_counts[team] = team_counts.get(team, 0) + 1
-            design_id = link.get('designId', '')
-            design_image = link.get('designImage', design_id)
-            key = f"{team} / {design_image}"
-            design_details[key] = design_details.get(key, 0) + 1
+        # Поддержка нескольких браслетов
+        bracelets_raw = data.get('bracelets', None)
+        if not bracelets_raw:
+            # старый формат — один браслет
+            links = data.get('links', [])
+            team_counts   = {}
+            design_details = {}
+            for link in links:
+                team = link.get('teamName', 'Unknown')
+                team_counts[team] = team_counts.get(team, 0) + 1
+                key = f"{team} / {link.get('designImage', link.get('designId',''))}"
+                design_details[key] = design_details.get(key, 0) + 1
+            bracelets_raw = [{
+                'braceletIndex': 1,
+                'wristSize':  data.get('wristSize', 0),
+                'linksCount': data.get('linksCount', 0),
+                'price': total_price - delivery_price,
+                'composition': team_counts,
+                'designDetails': design_details,
+                'links': links,
+                'referencePhoto': None,
+            }]
 
-        # Сохраняем заказ в памяти
+        # Сохраняем референс-фото на диск (если есть)
+        refs_dir = os.path.join(os.path.dirname(__file__), 'reference_photos')
+        os.makedirs(refs_dir, exist_ok=True)
+        reference_photo_paths = []
+        for b in bracelets_raw:
+            ref_data_url = b.get('referencePhoto')
+            if ref_data_url and ref_data_url.startswith('data:image'):
+                try:
+                    import base64
+                    header, encoded = ref_data_url.split(',', 1)
+                    ext = 'jpg'
+                    if 'png' in header: ext = 'png'
+                    elif 'gif' in header: ext = 'gif'
+                    fname = f"ref_{datetime.now().strftime('%Y%m%d_%H%M%S')}_br{b.get('braceletIndex',1)}.{ext}"
+                    fpath = os.path.join(refs_dir, fname)
+                    with open(fpath, 'wb') as f:
+                        f.write(base64.b64decode(encoded))
+                    b['referencePhotoPath'] = fname
+                    reference_photo_paths.append((b.get('braceletIndex', 1), fpath))
+                    b['referencePhoto'] = None  # не храним base64 в orders.json
+                except Exception as e:
+                    print(f"⚠️ Не удалось сохранить референс: {e}")
+
         order_counter += 1
+        bracelets_count = len(bracelets_raw)
+        total_links = sum(b.get('linksCount', 0) for b in bracelets_raw)
+
         order_obj = {
             'id': order_counter,
-            'wristSize': wrist_size,
-            'linksCount': links_count,
-            'totalPrice': total_price,
-            'composition': team_counts,
-            'designDetails': design_details,
-            'links': links,
-            'userName': user_name,
+            # legacy поля (первый браслет)
+            'wristSize':  bracelets_raw[0].get('wristSize', 0),
+            'linksCount': bracelets_raw[0].get('linksCount', 0),
+            'composition': bracelets_raw[0].get('composition', {}),
+            'designDetails': bracelets_raw[0].get('designDetails', {}),
+            # полные данные
+            'bracelets': bracelets_raw,
+            'braceletsCount': bracelets_count,
+            'totalPrice':    total_price,
+            'userName':  user_name,
             'userPhone': user_phone,
-            'userTg': user_tg,
-            'userCity': user_city,
+            'userTg':    user_tg,
+            'userCity':  user_city,
             'createdAt': datetime.now().isoformat(),
-            'status': 'новый',
-            'deliveryPrice': data.get('deliveryPrice', 0),
-            'deliveryTariff': data.get('deliveryTariff', None)
+            'status':    'новый',
+            'deliveryPrice':  delivery_price,
+            'deliveryTariff': delivery_tariff,
         }
         orders_storage.append(order_obj)
         save_orders_storage()
-        
+
         print(f"\n{'='*60}")
-        print(f"✅ НОВЫЙ ЗАКАЗ #{order_counter}")
-        print(f"{'='*60}")
-        print(f"👤 Клиент: {user_name}")
-        print(f"📱 Телефон: {user_phone}")
-        print(f"🔷 Telegram: {user_tg}")
-        print(f"🏙️ Город: {user_city}")
-        print(f"📏 Размер запястья: {wrist_size} см")
-        print(f"🔗 Звеньев: {links_count}")
-        print(f"💰 Сумма: {total_price}₽")
-        print(f"📋 Состав: {team_counts}")
-        print(f"⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
-        print(f"📦 Всего заказов: {len(orders_storage)}")
+        print(f"✅ НОВЫЙ ЗАКАЗ #{order_counter} ({bracelets_count} браслет(ов))")
+        print(f"👤 {user_name} | 📱 {user_phone} | 🔷 {user_tg} | 🏙️ {user_city}")
+        print(f"💰 {total_price}₽ | 🔗 {total_links} звеньев суммарно")
         print(f"{'='*60}\n")
 
-        # Формируем сообщение для Telegram
-        message = f"""
-📦 <b>🚨 НОВЫЙ ЗАКАЗ БРАСЛЕТА F1! #{order_counter}</b>
+        # ── Telegram сообщение ──
+        plural_br = 'браслет' if bracelets_count == 1 else ('браслета' if bracelets_count < 5 else 'браслетов')
+        message = (
+            f"📦 <b>🚨 НОВЫЙ ЗАКАЗ F1! #{order_counter}</b>"
+            f" — {bracelets_count} {plural_br}\n\n"
+            f"👤 <b>Клиент:</b> {user_name}\n"
+            f"📱 <b>Телефон:</b> <code>{user_phone}</code>\n"
+            f"🔷 <b>Telegram:</b> {user_tg}\n"
+            f"🏙️ <b>Город:</b> {user_city}\n"
+            f"💰 <b>Итого:</b> <b>{total_price}₽</b>"
+        )
+        if delivery_price:
+            message += f"\n🚚 <b>Доставка СДЭК:</b> {delivery_price}₽"
 
-👤 <b>Клиент:</b> {user_name}
-📱 <b>Телефон:</b> <code>{user_phone}</code>
-🔷 <b>Telegram:</b> {user_tg}
-🏙️ <b>Город:</b> {user_city}
+        for b in bracelets_raw:
+            idx   = b.get('braceletIndex', 1)
+            br_price = b.get('price', 0)
+            wrist = b.get('wristSize', '?')
+            lc    = b.get('linksCount', 0)
+            has_ref = bool(b.get('referencePhotoPath'))
+            message += f"\n\n{'─'*30}\n🔗 <b>Браслет {idx}</b>  {br_price}₽"
+            if has_ref: message += "  📎 <i>есть референс</i>"
+            message += f"\n📏 Запястье: {wrist} см · {lc} звеньев"
+            comp = b.get('composition', {})
+            if comp:
+                message += "\n📋 Состав: " + ", ".join(f"{t}: {c}" for t, c in sorted(comp.items()))
+            dd = b.get('designDetails', {})
+            if dd:
+                message += "\n🎨 Дизайны:"
+                for dk, dc in sorted(dd.items()):
+                    message += f"\n  · {dk} ×{dc}"
 
-📏 <b>Размер запястья:</b> {wrist_size} см
-🔗 <b>Всего звеньев:</b> {links_count}
-💰 <b>Итоговая сумма:</b> <b>{total_price}₽</b>
-
-📋 <b>СОСТАВ БРАСЛЕТА:</b>
-"""
-        
-        for team, count in sorted(team_counts.items()):
-            message += f"\n  • {team}: {count} звеньев"
-
-        # Детальный состав по дизайнам
-        if design_details:
-            message += f"\n\n🎨 <b>ДИЗАЙНЫ:</b>"
-            for design_key, count in sorted(design_details.items()):
-                message += f"\n  · {design_key} × {count}"
-        
-        message += f"\n\n✅ Статус: <b>НОВЫЙ</b>"
-        message += f"\n⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}"
+        message += f"\n\n⏰ {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}"
         admin_url = os.getenv('ADMIN_URL', 'http://127.0.0.1:8080/admin')
-        message += f"\n\n<a href='{admin_url}'>📊 ПЕРЕЙТИ В АДМИНКУ</a>"
+        message += f"\n<a href='{admin_url}'>📊 Открыть админку</a>"
 
-        # Отправляем в Telegram
         if BOT_TOKEN and ADMIN_ID:
             send_to_telegram(BOT_TOKEN, ADMIN_ID, message)
-            return jsonify({'success': True, 'message': 'Заказ принят!', 'orderId': order_counter})
+            # Отправляем референс-фото отдельными сообщениями
+            for br_idx, fpath in reference_photo_paths:
+                try:
+                    send_photo_to_telegram(BOT_TOKEN, ADMIN_ID, fpath,
+                        caption=f"📎 Референс к заказу #{order_counter}, браслет {br_idx}")
+                except Exception as e:
+                    print(f"⚠️ Не удалось отправить фото: {e}")
         else:
-            print("⚠️ BOT_TOKEN или ADMIN_ID не установлены - заказ сохранен локально")
-            return jsonify({'success': True, 'message': 'Заказ принят!', 'orderId': order_counter})
+            print("⚠️ BOT_TOKEN или ADMIN_ID не установлены — заказ сохранён локально")
+
+        return jsonify({'success': True, 'message': 'Заказ принят!', 'orderId': order_counter})
 
     except Exception as e:
         print(f"❌ Ошибка при обработке заказа: {e}")
+        import traceback; traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/admin/login', methods=['POST'])
@@ -383,6 +431,24 @@ def send_to_telegram(token, chat_id, message):
             print(f"❌ Ошибка отправки: {response.text}")
     except Exception as e:
         print(f"❌ Ошибка подключения к Telegram: {e}")
+
+
+def send_photo_to_telegram(token, chat_id, photo_path, caption=''):
+    """Отправить фото-референс в Telegram."""
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
+    try:
+        with open(photo_path, 'rb') as photo_file:
+            response = requests.post(url, data={
+                'chat_id': chat_id,
+                'caption': caption,
+                'parse_mode': 'HTML'
+            }, files={'photo': photo_file}, timeout=30)
+        if response.status_code == 200:
+            print(f"✅ Референс-фото отправлено")
+        else:
+            print(f"❌ Ошибка отправки фото: {response.text}")
+    except Exception as e:
+        print(f"❌ Ошибка отправки фото: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080, host='127.0.0.1')
