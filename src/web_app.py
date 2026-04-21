@@ -72,100 +72,17 @@ def shop_status():
 def calculate_delivery():
     """Рассчитать стоимость доставки СДЭК."""
     try:
-        data = request.json
-        city = data.get('city', '').strip()
+        data = request.get_json(silent=True) or {}
+        city = str(data.get('city', '')).strip()
         order_price = data.get('orderPrice', 700)
 
         if not city:
             return jsonify({'success': False, 'message': 'Укажите город'}), 400
 
-        cdek_client_id = os.getenv('CDEK_CLIENT_ID', '')
-        cdek_client_secret = os.getenv('CDEK_CLIENT_SECRET', '')
+        cdek_client_id = os.getenv('CDEK_CLIENT_ID', '').strip()
+        cdek_client_secret = os.getenv('CDEK_CLIENT_SECRET', '').strip()
 
-        # Получаем токен СДЭК
-        if cdek_client_id and cdek_client_secret:
-            print(f"🚚 СДЭК: запрос токена для города '{city}'")
-            token_resp = requests.post(
-                'https://api.cdek.ru/v2/oauth/token',
-                data={
-                    'grant_type': 'client_credentials',
-                    'client_id': cdek_client_id,
-                    'client_secret': cdek_client_secret
-                },
-                timeout=10
-            )
-            print(f"🚚 СДЭК токен: status={token_resp.status_code}, body={token_resp.text[:200]}")
-            if token_resp.status_code != 200:
-                raise Exception(f'Не удалось получить токен СДЭК: {token_resp.text}')
-            token = token_resp.json().get('access_token')
-            if not token:
-                raise Exception('Токен СДЭК пустой')
-
-            # Ищем код города
-            city_resp = requests.get(
-                'https://api.cdek.ru/v2/location/cities',
-                headers={'Authorization': f'Bearer {token}'},
-                params={'city': city, 'country_codes': 'RU', 'size': 3},
-                timeout=10
-            )
-            print(f"🚚 СДЭК города: status={city_resp.status_code}, body={city_resp.text[:300]}")
-            cities = city_resp.json()
-            if not cities:
-                return jsonify({'success': False, 'message': f'Город «{city}» не найден в базе СДЭК'}), 200
-
-            city_code = cities[0]['code']
-            print(f"🚚 СДЭК: найден город code={city_code}, name={cities[0].get('city')}")
-
-            # Тарифы: ПВЗ (136), Курьер (137), Экономичный ПВЗ (234), Экономичный Курьер (233)
-            tariff_codes = [
-                (136, 'СДЭК Экспресс — до ПВЗ', 'ПВЗ'),
-                (137, 'СДЭК Экспресс — курьер', 'Курьер'),
-                (234, 'СДЭК Экономичный — до ПВЗ', 'ПВЗ'),
-                (233, 'СДЭК Экономичный — курьер', 'Курьер'),
-            ]
-
-            tariffs = []
-            for code, name, delivery_type in tariff_codes:
-                try:
-                    payload = {
-                        'tariff_code': code,
-                        'from_location': {'city': 'Москва', 'country_code': 'RU'},
-                        'to_location': {'code': city_code},
-                        'packages': [{'weight': 100, 'length': 15, 'width': 10, 'height': 3}]
-                    }
-                    calc_resp = requests.post(
-                        'https://api.cdek.ru/v2/calculator/tariff',
-                        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
-                        json=payload,
-                        timeout=10
-                    )
-                    print(f"🚚 Тариф {code}: status={calc_resp.status_code}, body={calc_resp.text[:300]}")
-                    r = calc_resp.json()
-                    # СДЭК возвращает total_sum или delivery_sum
-                    price = r.get('total_sum') or r.get('delivery_sum')
-                    if price:
-                        tariffs.append({
-                            'tariff_code': code,
-                            'name': name,
-                            'delivery_type': delivery_type,
-                            'price': int(price),
-                            'period_min': r.get('period_min', 1),
-                            'period_max': r.get('period_max', 7),
-                        })
-                    else:
-                        print(f"⚠️ Тариф {code}: нет цены в ответе: {r}")
-                except Exception as e:
-                    print(f"⚠️ Тариф {code}: исключение: {e}")
-                    continue
-
-            if not tariffs:
-                return jsonify({'success': False, 'message': 'Не удалось рассчитать тарифы для этого города. Оформите заказ — уточним стоимость вручную.'}), 200
-
-            tariffs.sort(key=lambda x: x['price'])
-            return jsonify({'success': True, 'tariffs': tariffs})
-
-        else:
-            # СДЭК не настроен — возвращаем фиксированные тарифы-заглушки
+        if not cdek_client_id or not cdek_client_secret:
             print("⚠️ CDEK_CLIENT_ID/SECRET не заданы — возвращаем фиксированные тарифы")
             tariffs = [
                 {'tariff_code': 136, 'name': 'СДЭК — до ПВЗ', 'delivery_type': 'ПВЗ',
@@ -175,9 +92,113 @@ def calculate_delivery():
             ]
             return jsonify({'success': True, 'tariffs': tariffs})
 
+        print(f"🚚 СДЭК: расчёт для города '{city}', сумма заказа {order_price}")
+
+        token_resp = requests.post(
+            'https://api.cdek.ru/v2/oauth/token',
+            data={
+                'grant_type': 'client_credentials',
+                'client_id': cdek_client_id,
+                'client_secret': cdek_client_secret
+            },
+            timeout=15
+        )
+        print(f"🚚 СДЭК токен: status={token_resp.status_code}, body={token_resp.text[:300]}")
+
+        if token_resp.status_code != 200:
+            return jsonify({
+                'success': False,
+                'message': 'Ошибка авторизации в СДЭК. Проверьте CDEK_CLIENT_ID и CDEK_CLIENT_SECRET.'
+            }), 200
+
+        token = token_resp.json().get('access_token')
+        if not token:
+            return jsonify({'success': False, 'message': 'СДЭК не вернул access_token'}), 200
+
+        headers = {'Authorization': f'Bearer {token}'}
+
+        city_resp = requests.get(
+            'https://api.cdek.ru/v2/location/cities',
+            headers=headers,
+            params={'city': city, 'country_codes': 'RU', 'size': 10},
+            timeout=15
+        )
+        print(f"🚚 СДЭК города: status={city_resp.status_code}, body={city_resp.text[:500]}")
+
+        if city_resp.status_code != 200:
+            return jsonify({'success': False, 'message': 'Ошибка поиска города в базе СДЭК'}), 200
+
+        cities = city_resp.json()
+        if not isinstance(cities, list) or not cities:
+            return jsonify({'success': False, 'message': f'Город «{city}» не найден в базе СДЭК'}), 200
+
+        city_code = cities[0].get('code')
+        if not city_code:
+            return jsonify({'success': False, 'message': f'Для города «{city}» не найден код СДЭК'}), 200
+
+        print(f"🚚 СДЭК: найден город code={city_code}, name={cities[0].get('city')}")
+
+        tariff_codes = [
+            (136, 'СДЭК Экспресс — до ПВЗ', 'ПВЗ'),
+            (137, 'СДЭК Экспресс — курьер', 'Курьер'),
+            (234, 'СДЭК Экономичный — до ПВЗ', 'ПВЗ'),
+            (233, 'СДЭК Экономичный — курьер', 'Курьер'),
+        ]
+
+        tariffs = []
+        for code, name, delivery_type in tariff_codes:
+            payload = {
+                'tariff_code': code,
+                'from_location': {'city': 'Москва', 'country_code': 'RU'},
+                'to_location': {'code': city_code},
+                'packages': [{'weight': 300, 'length': 15, 'width': 10, 'height': 3}]
+            }
+
+            try:
+                calc_resp = requests.post(
+                    'https://api.cdek.ru/v2/calculator/tariff',
+                    headers={**headers, 'Content-Type': 'application/json'},
+                    json=payload,
+                    timeout=15
+                )
+                print(f"🚚 Тариф {code}: status={calc_resp.status_code}, body={calc_resp.text[:500]}")
+
+                if calc_resp.status_code != 200:
+                    continue
+
+                r = calc_resp.json()
+                price = r.get('total_sum') or r.get('delivery_sum')
+                if price is None:
+                    print(f"⚠️ Тариф {code}: нет цены в ответе: {r}")
+                    continue
+
+                tariffs.append({
+                    'tariff_code': code,
+                    'name': name,
+                    'delivery_type': delivery_type,
+                    'price': int(float(price)),
+                    'period_min': r.get('period_min', 1),
+                    'period_max': r.get('period_max', 7),
+                })
+            except Exception as tariff_error:
+                print(f"⚠️ Тариф {code}: исключение: {repr(tariff_error)}")
+                continue
+
+        if not tariffs:
+            return jsonify({
+                'success': False,
+                'message': 'СДЭК не вернул ни одного тарифа. Проверьте лог сервера.'
+            }), 200
+
+        tariffs.sort(key=lambda x: x['price'])
+        return jsonify({'success': True, 'tariffs': tariffs})
+
     except Exception as e:
-        print(f"❌ Ошибка расчёта доставки: {e}")
-        return jsonify({'success': False, 'message': 'Ошибка расчёта доставки. Оформите заказ — менеджер уточнит стоимость.'}), 200
+        print(f"❌ Ошибка расчёта доставки: {repr(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Ошибка расчёта доставки. Подробности смотрите в логе сервера.'
+        }), 200
 
 
 @app.route('/api/admin/shop/toggle', methods=['POST'])
