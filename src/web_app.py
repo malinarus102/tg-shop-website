@@ -306,7 +306,8 @@ def submit_order():
         user_name  = data.get('userName', 'Аноним')
         user_phone = data.get('userPhone', 'Не указан')
         user_tg    = data.get('userTg', 'Не указан')
-        user_city  = data.get('userCity', 'Не указан')
+        user_city    = data.get('userCity', 'Не указан')
+        user_comment = data.get('userComment', '').strip()
         total_price     = data.get('totalPrice', 0)
         delivery_price  = data.get('deliveryPrice', 0)
         delivery_tariff = data.get('deliveryTariff', None)
@@ -375,7 +376,8 @@ def submit_order():
             'userName':  user_name,
             'userPhone': user_phone,
             'userTg':    user_tg,
-            'userCity':  user_city,
+            'userCity':    user_city,
+            'userComment': user_comment,
             'createdAt': datetime.now().isoformat(),
             'status':    'новый',
             'deliveryPrice':  delivery_price,
@@ -403,6 +405,8 @@ def submit_order():
         )
         if delivery_price:
             message += f"\n🚚 <b>Доставка СДЭК:</b> {delivery_price}₽"
+        if user_comment:
+            message += f"\n💬 <b>Комментарий:</b> {user_comment}"
 
         for b in bracelets_raw:
             idx   = b.get('braceletIndex', 1)

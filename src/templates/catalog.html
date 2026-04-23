@@ -1540,6 +1540,11 @@
             <input id="checkoutPhone" type="tel" placeholder="+7 999 000-00-00">
         </div>
 
+        <div class="field">
+            <label>Комментарий к заказу <span style="font-weight:400;color:var(--text-dim)">(необязательно)</span></label>
+            <textarea id="checkoutComment" placeholder="Пожелания, уточнения по браслету..." rows="3" style="width:100%;padding:13px 14px;background:var(--bg);border:1px solid var(--border-bright);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:vertical;transition:border-color 0.2s;line-height:1.5" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor=''"></textarea>
+        </div>
+
         <div id="checkoutError" class="checkout-error"></div>
 
         <button class="btn-primary" id="finishPitStopBtn" onclick="finishPitStop()">ПОДТВЕРДИТЬ ЗАКАЗ 🏁</button>
@@ -1578,6 +1583,11 @@
         <div class="field">
             <label>Телефон</label>
             <input id="checkoutPhone" type="tel" placeholder="+7 999 000-00-00">
+        </div>
+
+        <div class="field">
+            <label>Комментарий к заказу <span style="font-weight:400;color:var(--text-dim)">(необязательно)</span></label>
+            <textarea id="checkoutComment" placeholder="Пожелания, уточнения по браслету..." rows="3" style="width:100%;padding:13px 14px;background:var(--bg);border:1px solid var(--border-bright);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:vertical;transition:border-color 0.2s;line-height:1.5" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor=''"></textarea>
         </div>
 
         <div id="checkoutError" class="checkout-error"></div>
@@ -2114,9 +2124,10 @@
     }
 
     async function finishPitStop() {
-        const userTg    = document.getElementById('checkoutTg').value.trim();
-        const userCity  = document.getElementById('checkoutCity').value.trim();
-        const userPhone = document.getElementById('checkoutPhone').value.trim();
+        const userTg      = document.getElementById('checkoutTg').value.trim();
+        const userCity   = document.getElementById('checkoutCity').value.trim();
+        const userPhone  = document.getElementById('checkoutPhone').value.trim();
+        const userComment = document.getElementById('checkoutComment').value.trim();
         const errorBox  = document.getElementById('checkoutError');
         const finishBtn = document.getElementById('finishPitStopBtn');
         const submitBtn = document.getElementById('submitBtn');
@@ -2170,7 +2181,8 @@
             userTgId:       tgUser?.id ?? null,
             initData:       tgInitData,
             deliveryPrice,
-            deliveryTariff: selectedTariff
+            deliveryTariff: selectedTariff,
+            userComment
         };
 
         try {

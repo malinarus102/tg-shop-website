@@ -560,6 +560,30 @@
         .is-closed .shop-dot { background: #ff6b8a; }
 
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .comment-block {
+            background: rgba(232,0,45,0.06);
+            border: 1px solid rgba(232,0,45,0.2);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .comment-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--red);
+            margin-bottom: 6px;
+            opacity: 0.8;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -833,6 +857,12 @@
                 </div>
 
                 ${deliveryBlock}
+
+                ${order.userComment ? `
+                <div class="comment-block">
+                    <div class="comment-label">💬 Комментарий клиента</div>
+                    <div class="comment-text">\${order.userComment}</div>
+                </div>` : ''}
 
                 <div class="composition-block">
                     <div class="composition-label">Состав ${braceletsCount > 1 ? 'браслетов' : 'браслета'}</div>
