@@ -138,7 +138,7 @@ TEAMS = {
         "name": "Red Bull Racing",
         "color": "#3671C6",
         "textColor": "#FFFFFF",
-        "drivers": ["Max Verstappen", "Liam Lawson"],
+        "drivers": ["Max Verstappen", "Isack Hadjar"],
         "designs": _load_team_designs("red_bull", "rb"),
     },
     "mclaren": {
@@ -159,7 +159,7 @@ TEAMS = {
         "name": "Alpine",
         "color": "#0093CC",
         "textColor": "#FFFFFF",
-        "drivers": ["Pierre Gasly", "Jack Doohan"],
+        "drivers": ["Pierre Gasly", "Franko Colapinto"],
         "designs": _load_team_designs("alpine", "al"),
     },
     "haas": {
@@ -173,7 +173,7 @@ TEAMS = {
         "name": "Racing Bulls",
         "color": "#6692FF",
         "textColor": "#FFFFFF",
-        "drivers": ["Yuki Tsunoda", "Isack Hadjar"],
+        "drivers": ["Liam Lawson", "Arvid Lindblad"],
         "designs": _load_team_designs("racing_bulls", "rbt"),
     },
     "williams": {
@@ -184,7 +184,7 @@ TEAMS = {
         "designs": _load_team_designs("williams", "w"),
     },
     "audi": {
-        "name": "Audi / Sauber",
+        "name": "Audi",
         "color": "#00E0C3",
         "textColor": "#000000",
         "drivers": ["Nico Hülkenberg", "Gabriel Bortoleto"],
@@ -194,7 +194,7 @@ TEAMS = {
         "name": "Cadillac",
         "color": "#CC0000",
         "textColor": "#FFFFFF",
-        "drivers": ["Colton Herta", "TBA"],
+        "drivers": ["Sergio Perez", "Valterri Bottas"],
         "designs": _load_team_designs("cadillac", "cad"),
     },
 }
